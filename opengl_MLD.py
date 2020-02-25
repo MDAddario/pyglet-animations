@@ -196,9 +196,13 @@ def on_key_press(symbol, modifiers):
 		pyglet.clock.schedule(trans_y, rate=-trans_rate)
 
 	elif symbol == key.RIGHT:
+		if keys[key.LEFT]:
+			pyglet.clock.unschedule(trans_x)
 		pyglet.clock.schedule(trans_x, rate=trans_rate)
 
 	elif symbol == key.LEFT:
+		if keys[key.RIGHT]:
+			pyglet.clock.unschedule(trans_x)
 		pyglet.clock.schedule(trans_x, rate=-trans_rate)
 
 
@@ -214,10 +218,12 @@ def on_key_release(symbol, modifiers):
 			pyglet.clock.unschedule(trans_y)
 
 	if symbol == key.RIGHT:
-		pyglet.clock.unschedule(trans_x)
+		if not keys[key.LEFT]:
+			pyglet.clock.unschedule(trans_x)
 
 	elif symbol == key.LEFT:
-		pyglet.clock.unschedule(trans_x)
+		if not keys[key.RIGHT]:
+			pyglet.clock.unschedule(trans_x)
 
 
 # Accept mouse input
