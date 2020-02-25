@@ -159,8 +159,6 @@ def random_torus(dt, color):
 
 # Accept keyboard input
 from pyglet.window import key
-keys = key.KeyStateHandler()
-window.push_handlers(keys)
 
 trans_rate = 2
 spin_rate  = 150
@@ -225,13 +223,15 @@ def on_key_release(symbol, modifiers):
 # Accept mouse input
 from pyglet.window import mouse
 
+# Add keystate handler (breaks if you put this sooner in the code)
+keys = key.KeyStateHandler()
+window.push_handlers(keys)
+
 
 @window.event
 def on_mouse_press(x, y, button, modifiers):
 	
 	if button & mouse.LEFT:
-		
-		print(keys[key.A])
 		
 		if keys[key.A]:
 			
