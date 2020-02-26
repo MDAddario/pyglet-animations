@@ -139,28 +139,21 @@ origin_vertices_1 = np.copy(torus_model_1.vertices)
 center_vertices_1 = np.zeros(3)
 
 
-# Translate existing vertex list
+# Update the torus center position
 def trans_torus_x(dt, rate):
 	global center_vertices_1
 	center_vertices_1[0] += dt * rate
-	
-	# Reshape vertices into Nx3 array
-	length = origin_vertices_1.shape[0]
-	reshaped = np.reshape(origin_vertices_1, (length//3, 3))
-	reshaped += center_vertices_1
-	ravelled = np.ravel(reshaped)
-	
-	# Debug
-	if origin_vertices_1.shape != ravelled.shape:
-		raise ValueError('You messed up sir.')
-	
-	# Update the vertices
-	torus_model_1.vertices = ravelled
-	
+	trans_torus()
+
 
 def trans_torus_y(dt, rate):
 	global center_vertices_1
 	center_vertices_1[1] += dt * rate
+	trans_torus()
+
+
+# Translate existing vertex list
+def trans_torus():
 	
 	# Reshape vertices into Nx3 array
 	length = origin_vertices_1.shape[0]
@@ -194,7 +187,9 @@ def random_torus(dt, color):
 # Accept keyboard input
 from pyglet.window import key
 
-trans_rate = 0.2
+# Translation speeds
+cam_rate = 2.0
+tor_rate = 0.2
 
 
 def trans_camera_x(dt, rate):
@@ -222,43 +217,43 @@ def on_key_press(symbol, modifiers):
 	elif symbol == key.UP:
 		if keys[key.DOWN]:
 			pyglet.clock.unschedule(trans_camera_y)
-		pyglet.clock.schedule(trans_camera_y, rate=trans_rate)
+		pyglet.clock.schedule(trans_camera_y, rate=cam_rate)
 
 	elif symbol == key.DOWN:
 		if keys[key.UP]:
 			pyglet.clock.unschedule(trans_camera_y)
-		pyglet.clock.schedule(trans_camera_y, rate=-trans_rate)
+		pyglet.clock.schedule(trans_camera_y, rate=-cam_rate)
 
 	elif symbol == key.RIGHT:
 		if keys[key.LEFT]:
 			pyglet.clock.unschedule(trans_camera_x)
-		pyglet.clock.schedule(trans_camera_x, rate=trans_rate)
+		pyglet.clock.schedule(trans_camera_x, rate=cam_rate)
 
 	elif symbol == key.LEFT:
 		if keys[key.RIGHT]:
 			pyglet.clock.unschedule(trans_camera_x)
-		pyglet.clock.schedule(trans_camera_x, rate=-trans_rate)
+		pyglet.clock.schedule(trans_camera_x, rate=-cam_rate)
 		
 	# Translate the torus
 	elif symbol == key.W:
 		if keys[key.S]:
 			pyglet.clock.unschedule(trans_torus_y)
-		pyglet.clock.schedule(trans_torus_y, rate=trans_rate)
+		pyglet.clock.schedule(trans_torus_y, rate=tor_rate)
 
 	elif symbol == key.S:
 		if keys[key.W]:
 			pyglet.clock.unschedule(trans_torus_y)
-		pyglet.clock.schedule(trans_torus_y, rate=-trans_rate)
+		pyglet.clock.schedule(trans_torus_y, rate=-tor_rate)
 
 	elif symbol == key.D:
 		if keys[key.A]:
 			pyglet.clock.unschedule(trans_torus_x)
-		pyglet.clock.schedule(trans_torus_x, rate=trans_rate)
+		pyglet.clock.schedule(trans_torus_x, rate=tor_rate)
 
 	elif symbol == key.A:
 		if keys[key.D]:
 			pyglet.clock.unschedule(trans_torus_x)
-		pyglet.clock.schedule(trans_torus_x, rate=-trans_rate)
+		pyglet.clock.schedule(trans_torus_x, rate=-tor_rate)
 
 @window.event
 def on_key_release(symbol, modifiers):
