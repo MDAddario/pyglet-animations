@@ -89,10 +89,10 @@ def create_torus(radius, inner_radius, slices, inner_slices, batch, color='purpl
 		diffuse = [0.5, 0.0, 0.3, 1.0]
 	elif color == 'red':
 		diffuse = [1.0, 0.0, 0.0, 1.0]
+	elif color == 'green':
+		diffuse = [0.0, 1.0, 0.0, 1.0]
 	elif color == 'blue':
 		diffuse = [0.0, 0.0, 1.0, 1.0]
-	elif color == 'grey':
-		diffuse = [0.5, 0.5, 0.5, 1.0]
 	else:
 		diffuse = [0.5, 0.5, 0.5, 1.0]
 
@@ -111,7 +111,7 @@ def create_torus(radius, inner_radius, slices, inner_slices, batch, color='purpl
 									('v3f/dynamic', vertices),
 									('n3f/static', normals))
 
-	return vertex_list, vertices
+	return vertex_list
 
 
 # Setup window and batch
@@ -124,22 +124,22 @@ dx = dy = 0
 dz = -4
 
 # Generate sample toruses
-torus_model_1, vertices_1 = create_torus(radius=0.6, inner_radius=0.2, slices=50, 
-										 inner_slices=30, batch=batch)
-torus_model_2, vectices_2 = create_torus(radius=1.0, inner_radius=0.2, slices=50, 
-										 inner_slices=30, batch=batch)
-torus_model_3, vertices_3 = create_torus(radius=1.4, inner_radius=0.2, slices=50, 
-										 inner_slices=30, batch=batch)
+torus_model_1 = create_torus(radius=0.6, inner_radius=0.2, slices=50, 
+							 inner_slices=30, batch=batch)
+torus_model_2 = create_torus(radius=1.0, inner_radius=0.2, slices=50, 
+							 inner_slices=30, batch=batch)
+torus_model_3 = create_torus(radius=1.4, inner_radius=0.2, slices=50, 
+							 inner_slices=30, batch=batch)
 
 # Delete a vertex list from batch
 torus_model_2.delete()
 
 # Translate existing vertex list
-new_vertices = []
-for element in vertices_3:
-	new_vertices.append(element+0.5)
-
-torus_model_3.vertices = new_vertices
+origin_vertices_3 = np.copy(torus_model_3.vertices)
+torus_model_3.vertices = origin_vertices_3 + 0.5
+torus_model_3.vertices = origin_vertices_3 + 0.5
+torus_model_3.vertices = origin_vertices_3 + 0.5
+torus_model_3.vertices = origin_vertices_3 + 0.5
 
 
 # Update every frame (required to make clock vary smoothly)
