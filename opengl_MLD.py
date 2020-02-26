@@ -142,13 +142,17 @@ center_vertices_1 = np.zeros(3)
 # Translate existing vertex list
 def trans_torus_x(dt, rate):
 	global center_vertices_1
-	center_vertices_1[0] -= dt * rate
+	center_vertices_1[0] += dt * rate
 	
 	# Reshape vertices into Nx3 array
 	length = origin_vertices_1.shape[0]
 	reshaped = np.reshape(origin_vertices_1, (length//3, 3))
 	reshaped += center_vertices_1
 	ravelled = np.ravel(reshaped)
+	
+	# Debug
+	if origin_vertices_1.shape != ravelled.shape:
+		raise ValueError('You messed up sir.')
 	
 	# Update the vertices
 	torus_model_1.vertices = ravelled
@@ -156,13 +160,17 @@ def trans_torus_x(dt, rate):
 
 def trans_torus_y(dt, rate):
 	global center_vertices_1
-	center_vertices_1[1] -= dt * rate
+	center_vertices_1[1] += dt * rate
 	
 	# Reshape vertices into Nx3 array
 	length = origin_vertices_1.shape[0]
 	reshaped = np.reshape(origin_vertices_1, (length//3, 3))
 	reshaped += center_vertices_1
 	ravelled = np.ravel(reshaped)
+	
+	# Debug
+	if origin_vertices_1.shape != ravelled.shape:
+		raise ValueError('You messed up sir.')
 	
 	# Update the vertices
 	torus_model_1.vertices = ravelled
@@ -186,7 +194,7 @@ def random_torus(dt, color):
 # Accept keyboard input
 from pyglet.window import key
 
-trans_rate = 2
+trans_rate = 0.2
 
 
 def trans_camera_x(dt, rate):
