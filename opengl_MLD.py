@@ -122,9 +122,33 @@ class CustomModel:
 	def __init__(self, vertex_list):
 		self.vertex_list = vertex_list
 
+		# Extract the vertices immediately as Nx3 array (deepcopy)
+		self.num_vertices = self.vertex_list.vertices.size // 3
+		self.vertices = []
+		self.vertices.extend(self.vertex_list.vertices)
+		self.vertices = np.reshape(self.vertices, (self.num_vertices, 3))
+
 	# Destructor
 	def __delete__(self):
 		vertex_list.delete()
+
+	# Rescale total object size
+	def rescale(self, new_size):
+
+		# Make sure that all coordinates are non-negative
+		temp_vertices = np.copy(self.vertices)
+		for xi in range(3):
+			temp_vertices[:,xi] -= np.min(temp_vertices[:,xi])
+		
+		# Determine maximal distance from origin 
+		distances = np.sum(np.square(temp_vertices), axis=1)
+		max_dist = np.max(distances)
+		
+		# Compute scaling factor
+		scaling = new_size / max_dist
+		
+		# Rescale!
+		self.vertex_list.vertices = np.copy(np.ravel(self.vertices)) * scaling
 
 
 # Setup window and batch
@@ -134,7 +158,7 @@ batch = pyglet.graphics.Batch()
 # Initialize global variables
 rx = ry = rz = 0
 dx = dy = 0
-dz = -200
+dz = -20
 
 # Generate sample toruses
 torus_model_1 = create_torus(radius=0.6, inner_radius=0.2, slices=50, 
@@ -346,5 +370,7 @@ def on_mouse_scroll(x, y, scroll_x, scroll_y):
 # Include 3D models
 os.chdir('fox/')
 fox = pyglet.model.load("low-poly-fox-by-pixelmannen.obj", batch=batch)
+fox_model = CustomModel(fox.vertex_lists[0])
+fox_model.rescale(200)
 
 pyglet.app.run()
