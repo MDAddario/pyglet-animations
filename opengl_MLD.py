@@ -122,7 +122,7 @@ class CustomModel:
 	def __init__(self, vertex_list):
 		self.vertex_list = vertex_list
 
-		# Extract the vertices immediately as Nx3 array (deepcopy)
+		# Extract a deepcopy of vertices formatted as Nx3 array
 		self.num_vertices = self.vertex_list.vertices.size // 3
 		self.vertices = []
 		self.vertices.extend(self.vertex_list.vertices)
@@ -141,13 +141,14 @@ class CustomModel:
 			temp_vertices[:,xi] -= np.min(temp_vertices[:,xi])
 		
 		# Determine maximal distance from origin 
-		distances = np.sum(np.square(temp_vertices), axis=1)
+		distances = np.sqrt(np.sum(np.square(temp_vertices), axis=1))
 		max_dist = np.max(distances)
 		
 		# Compute scaling factor
 		scaling = new_size / max_dist
 		
-		# Rescale!
+		# Rescale vertex copy and real deal
+		self.vertices *= scaling
 		self.vertex_list.vertices = np.copy(np.ravel(self.vertices)) * scaling
 
 
@@ -371,6 +372,7 @@ def on_mouse_scroll(x, y, scroll_x, scroll_y):
 os.chdir('fox/')
 fox = pyglet.model.load("low-poly-fox-by-pixelmannen.obj", batch=batch)
 fox_model = CustomModel(fox.vertex_lists[0])
-fox_model.rescale(200)
+fox_model.rescale(2)
+fox_model.rescale(2)
 
 pyglet.app.run()
