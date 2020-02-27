@@ -132,6 +132,20 @@ class CustomModel:
 	def __delete__(self):
 		vertex_list.delete()
 
+	# Edit both the real copy and self copy of vertices
+	def __scale_vertices(self, scale_x, scale_y, scale_z):
+		self.vertices[:,0] *= scale_x
+		self.vertices[:,1] *= scale_y
+		self.vertices[:,2] *= scale_z
+		self.vertex_list.vertices = np.copy(np.ravel(self.vertices))
+
+	# Edit both the real copy and self copy of vertices
+	def __translate_vertices(self, trans_x, trans_y, trans_z):
+		self.vertices[:,0] += trans_x
+		self.vertices[:,1] += trans_y
+		self.vertices[:,2] += trans_z
+		self.vertex_list.vertices = np.copy(np.ravel(self.vertices))
+
 	# Rescale total object size
 	def rescale(self, new_size):
 
@@ -139,17 +153,14 @@ class CustomModel:
 		temp_vertices = np.copy(self.vertices)
 		for xi in range(3):
 			temp_vertices[:,xi] -= np.min(temp_vertices[:,xi])
-		
+
 		# Determine maximal distance from origin 
 		distances = np.sqrt(np.sum(np.square(temp_vertices), axis=1))
 		max_dist = np.max(distances)
-		
-		# Compute scaling factor
+
+		# Compute scaling factor and resize
 		scaling = new_size / max_dist
-		
-		# Rescale vertex copy and real deal
-		self.vertices *= scaling
-		self.vertex_list.vertices = np.copy(np.ravel(self.vertices)) * scaling
+		self.__scale_vertices(scaling, scaling, scaling)
 
 
 # Setup window and batch
