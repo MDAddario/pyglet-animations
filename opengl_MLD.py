@@ -37,7 +37,7 @@ def setup():
 	glEnable(GL_CULL_FACE)
 
 	# Wireframe view
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
+	#glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
 
 	# Simple light setup
 	glEnable(GL_LIGHTING)
@@ -123,10 +123,14 @@ class CustomModel:
 		self.vertex_list = vertex_list
 
 		# Extract a deepcopy of vertices formatted as Nx3 array
-		self.num_vertices = self.vertex_list.vertices.size // 3
+		num_vertices = self.vertex_list.vertices.size // 3
 		self.vertices = []
 		self.vertices.extend(self.vertex_list.vertices)
-		self.vertices = np.reshape(self.vertices, (self.num_vertices, 3))
+		self.vertices = np.reshape(self.vertices, (num_vertices, 3))
+		
+		# Define classical mechanics
+		self.position = np.zeros(3)
+		self.velocity = 0.2
 
 	# Destructor
 	def __delete__(self):
@@ -162,6 +166,18 @@ class CustomModel:
 		scaling = new_size / max_dist
 		self.__scale_vertices(scaling, scaling, scaling)
 
+	# Translate along x axis
+	def translate_x(self, dt):
+		__translate_vertices(dt * self.velocity, 0, 0)
+
+	# Translate along y axis
+	def translate_y(self, dt):
+		__translate_vertices(0, dt * self.velocity, 0)
+
+	# Translate along z axis
+	def translate_z(self, dt):
+		__translate_vertices(0, 0, dt * self.velocity)
+
 
 # Setup window and batch
 setup()
@@ -170,7 +186,7 @@ batch = pyglet.graphics.Batch()
 # Initialize global variables
 rx = ry = rz = 0
 dx = dy = 0
-dz = -20
+dz = -6
 
 # Generate sample toruses
 torus_model_1 = create_torus(radius=0.6, inner_radius=0.2, slices=50, 
@@ -383,7 +399,5 @@ def on_mouse_scroll(x, y, scroll_x, scroll_y):
 os.chdir('fox/')
 fox = pyglet.model.load("low-poly-fox-by-pixelmannen.obj", batch=batch)
 fox_model = CustomModel(fox.vertex_lists[0])
-fox_model.rescale(2)
-fox_model.rescale(2)
-
+fox_model.rescale(4)
 pyglet.app.run()
