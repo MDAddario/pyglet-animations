@@ -2,6 +2,7 @@ from math import pi, sin, cos
 import pyglet
 from pyglet.gl import *
 import numpy as np
+import os
 
 try:
 	# Try and create a window with multisampling (antialiasing)
@@ -36,7 +37,7 @@ def setup():
 	glEnable(GL_CULL_FACE)
 
 	# Wireframe view
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
+	#glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
 
 	# Simple light setup
 	glEnable(GL_LIGHTING)
@@ -121,7 +122,7 @@ batch = pyglet.graphics.Batch()
 # Initialize global variables
 rx = ry = rz = 0
 dx = dy = 0
-dz = -4
+dz = -200
 
 # Generate sample toruses
 torus_model_1 = create_torus(radius=0.6, inner_radius=0.2, slices=50, 
@@ -328,6 +329,10 @@ def on_mouse_scroll(x, y, scroll_x, scroll_y):
 	global dz
 	dz += scroll_y / 4
 	dz = min(dz, 0)
-	
+
+
+# Include 3D models
+os.chdir('fox/')
+fox = pyglet.model.load("low-poly-fox-by-pixelmannen.obj", batch=batch)
 
 pyglet.app.run()
