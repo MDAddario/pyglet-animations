@@ -129,7 +129,6 @@ class CustomModel:
 		self.vertices = np.reshape(self.vertices, (num_vertices, 3))
 
 		# Define classical mechanics
-		self.position = np.zeros(3)
 		self.speed = 2.0
 
 	# Destructor
@@ -186,7 +185,7 @@ batch = pyglet.graphics.Batch()
 # Initialize global variables
 rx = ry = rz = 0
 dx = dy = 0
-dz = -6
+dz = -8
 
 # Generate sample toruses
 torus_model_1 = create_torus(radius=0.6, inner_radius=0.2, slices=50, 
@@ -253,18 +252,19 @@ def random_torus(dt, color):
 from pyglet.window import key
 
 # Translation speeds
-cam_rate = 2.0
+cam_rate = 0.7
 tor_rate = 0.2
+zoom_rate = 0.25
 
 
 def trans_camera_x(dt, rate):
 	global dx
-	dx -= dt*rate
+	dx += dt * rate * dz
 
 
 def trans_camera_y(dt, rate):
 	global dy
-	dy -= dt*rate
+	dy += dt * rate * dz
 
 
 @window.event
@@ -429,7 +429,7 @@ def on_mouse_drag(x, y, dx, dy, buttons, modifiers):
 @window.event
 def on_mouse_scroll(x, y, scroll_x, scroll_y):
 	global dz
-	dz += scroll_y / 4
+	dz -= scroll_y * dz * zoom_rate
 	dz = min(dz, 0)
 
 
