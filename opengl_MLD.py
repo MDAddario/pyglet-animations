@@ -3,6 +3,8 @@ import pyglet
 from pyglet.gl import *
 import numpy as np
 import os
+from pyglet.window import key
+from pyglet.window import mouse
 
 try:
 	# Try and create a window with multisampling (antialiasing)
@@ -188,81 +190,28 @@ dx = dy = 0
 dz = -8
 
 # Generate sample toruses
-torus_model_1 = create_torus(radius=0.6, inner_radius=0.2, slices=50, 
-							 inner_slices=30, batch=batch)
-torus_model_2 = create_torus(radius=1.0, inner_radius=0.2, slices=50, 
-							 inner_slices=30, batch=batch)
-torus_model_3 = create_torus(radius=1.4, inner_radius=0.2, slices=50, 
-							 inner_slices=30, batch=batch)
-
-# Delete a vertex list from batch
-torus_model_2.delete()
-
-# Extract torus 1 vertex list
-origin_vertices_1 = np.copy(torus_model_1.vertices)
-center_vertices_1 = np.zeros(3)
-
-
-# Update the torus center position
-def trans_torus_x(dt, rate):
-	global center_vertices_1
-	center_vertices_1[0] += dt * rate
-	trans_torus()
-
-
-def trans_torus_y(dt, rate):
-	global center_vertices_1
-	center_vertices_1[1] += dt * rate
-	trans_torus()
-
-
-# Translate existing vertex list
-def trans_torus():
-
-	# Reshape vertices into Nx3 array
-	length = origin_vertices_1.shape[0]
-	reshaped = np.reshape(origin_vertices_1, (length//3, 3))
-	reshaped += center_vertices_1
-	ravelled = np.ravel(reshaped)
-
-	# Debug
-	if origin_vertices_1.shape != ravelled.shape:
-		raise ValueError('You messed up sir.')
-
-	# Update the vertices
-	torus_model_1.vertices = ravelled
+torus_model = create_torus(radius=0.6, inner_radius=0.2, slices=50, 
+						   inner_slices=30, batch=batch)
 
 
 # Update every frame (required to make clock vary smoothly)
 def update(dt):
 	pass
+
 pyglet.clock.schedule(update)
 
 
-# Create random torus
-def random_torus(dt, color):
-
-	radius = np.random.random() * 2 + 1
-	inner = np.random.random() * 0.3 + 0.3
-	create_torus(radius=radius, inner_radius=inner, slices=50, 
-				 inner_slices=30, batch=batch, color=color)
-
-
-# Accept keyboard input
-from pyglet.window import key
-
 # Translation speeds
 cam_rate = 0.7
-tor_rate = 0.2
 zoom_rate = 0.25
 
 
-def trans_camera_x(dt, rate):
+def translate_camera_x(dt, rate):
 	global dx
 	dx += dt * rate * dz
 
 
-def trans_camera_y(dt, rate):
+def translate_camera_y(dt, rate):
 	global dy
 	dy += dt * rate * dz
 
@@ -270,6 +219,7 @@ def trans_camera_y(dt, rate):
 @window.event
 def on_key_press(symbol, modifiers):
 
+	'''
 	if symbol == key.SPACE:
 
 		if modifiers & key.MOD_SHIFT:
@@ -277,69 +227,50 @@ def on_key_press(symbol, modifiers):
 
 		else:
 			random_torus(None, 'blue')
+	'''
 
 	# Translate the camera
-	elif symbol == key.UP:
+	if symbol == key.UP:
 		if keys[key.DOWN]:
-			pyglet.clock.unschedule(trans_camera_y)
-		pyglet.clock.schedule(trans_camera_y, rate=cam_rate)
+			pyglet.clock.unschedule(translate_camera_y)
+		pyglet.clock.schedule(translate_camera_y, rate=cam_rate)
 
 	elif symbol == key.DOWN:
 		if keys[key.UP]:
-			pyglet.clock.unschedule(trans_camera_y)
-		pyglet.clock.schedule(trans_camera_y, rate=-cam_rate)
+			pyglet.clock.unschedule(translate_camera_y)
+		pyglet.clock.schedule(translate_camera_y, rate=-cam_rate)
 
 	elif symbol == key.RIGHT:
 		if keys[key.LEFT]:
-			pyglet.clock.unschedule(trans_camera_x)
-		pyglet.clock.schedule(trans_camera_x, rate=cam_rate)
+			pyglet.clock.unschedule(translate_camera_x)
+		pyglet.clock.schedule(translate_camera_x, rate=cam_rate)
 
 	elif symbol == key.LEFT:
 		if keys[key.RIGHT]:
-			pyglet.clock.unschedule(trans_camera_x)
-		pyglet.clock.schedule(trans_camera_x, rate=-cam_rate)
-
-	# Translate the torus
-	elif symbol == key.W:
-		if keys[key.S]:
-			pyglet.clock.unschedule(trans_torus_y)
-		pyglet.clock.schedule(trans_torus_y, rate=tor_rate)
-
-	elif symbol == key.S:
-		if keys[key.W]:
-			pyglet.clock.unschedule(trans_torus_y)
-		pyglet.clock.schedule(trans_torus_y, rate=-tor_rate)
-
-	elif symbol == key.D:
-		if keys[key.A]:
-			pyglet.clock.unschedule(trans_torus_x)
-		pyglet.clock.schedule(trans_torus_x, rate=tor_rate)
-
-	elif symbol == key.A:
-		if keys[key.D]:
-			pyglet.clock.unschedule(trans_torus_x)
-		pyglet.clock.schedule(trans_torus_x, rate=-tor_rate)
+			pyglet.clock.unschedule(translate_camera_x)
+		pyglet.clock.schedule(translate_camera_x, rate=-cam_rate)
 
 	# Translate the fox
-	elif symbol == key.I:
-		if keys[key.K]:
+	elif symbol == key.W:
+		if keys[key.S]:
 			pyglet.clock.unschedule(fox_model.translate_y)
 		pyglet.clock.schedule(fox_model.translate_y, sign=+1)
 
-	elif symbol == key.K:
-		if keys[key.I]:
+	elif symbol == key.S:
+		if keys[key.W]:
 			pyglet.clock.unschedule(fox_model.translate_y)
 		pyglet.clock.schedule(fox_model.translate_y, sign=-1)
 
-	elif symbol == key.L:
-		if keys[key.J]:
+	elif symbol == key.D:
+		if keys[key.A]:
 			pyglet.clock.unschedule(fox_model.translate_x)
 		pyglet.clock.schedule(fox_model.translate_x, sign=+1)
 
-	elif symbol == key.J:
-		if keys[key.L]:
+	elif symbol == key.A:
+		if keys[key.D]:
 			pyglet.clock.unschedule(fox_model.translate_x)
 		pyglet.clock.schedule(fox_model.translate_x, sign=-1)
+
 
 @window.event
 def on_key_release(symbol, modifiers):
@@ -347,63 +278,39 @@ def on_key_release(symbol, modifiers):
 	# Reset the camera
 	if symbol == key.UP:
 		if not keys[key.DOWN]:
-			pyglet.clock.unschedule(trans_camera_y)
+			pyglet.clock.unschedule(translate_camera_y)
 
 	elif symbol == key.DOWN:
 		if not keys[key.UP]:
-			pyglet.clock.unschedule(trans_camera_y)
+			pyglet.clock.unschedule(translate_camera_y)
 
 	elif symbol == key.RIGHT:
 		if not keys[key.LEFT]:
-			pyglet.clock.unschedule(trans_camera_x)
+			pyglet.clock.unschedule(translate_camera_x)
 
 	elif symbol == key.LEFT:
 		if not keys[key.RIGHT]:
-			pyglet.clock.unschedule(trans_camera_x)
+			pyglet.clock.unschedule(translate_camera_x)
 
-	# Reset the torus
+	# Reset the fox
 	elif symbol == key.W:
 		if not keys[key.S]:
-			pyglet.clock.unschedule(trans_torus_y)
+			pyglet.clock.unschedule(fox_model.translate_y)
 
 	elif symbol == key.S:
 		if not keys[key.W]:
-			pyglet.clock.unschedule(trans_torus_y)
+			pyglet.clock.unschedule(fox_model.translate_y)
 
 	elif symbol == key.D:
 		if not keys[key.A]:
-			pyglet.clock.unschedule(trans_torus_x)
+			pyglet.clock.unschedule(fox_model.translate_x)
 
 	elif symbol == key.A:
 		if not keys[key.D]:
-			pyglet.clock.unschedule(trans_torus_x)
-
-	# Reset the fox
-	elif symbol == key.I:
-		if not keys[key.K]:
-			pyglet.clock.unschedule(fox_model.translate_y)
-
-	elif symbol == key.K:
-		if not keys[key.I]:
-			pyglet.clock.unschedule(fox_model.translate_y)
-
-	elif symbol == key.L:
-		if not keys[key.J]:
-			pyglet.clock.unschedule(fox_model.translate_x)
-
-	elif symbol == key.J:
-		if not keys[key.L]:
 			pyglet.clock.unschedule(fox_model.translate_x)
 
 
-# Accept mouse input
-from pyglet.window import mouse
-
-# Add keystate handler (breaks if you put this sooner in the code)
-keys = key.KeyStateHandler()
-window.push_handlers(keys)
-
-
+'''
 @window.event
 def on_mouse_press(x, y, button, modifiers):
 
@@ -411,9 +318,11 @@ def on_mouse_press(x, y, button, modifiers):
 
 		if keys[key.A]:
 
-			random_torus(None, 'grey')
+			do_function(arguments)
+'''
 
 
+# Rotate the window
 @window.event
 def on_mouse_drag(x, y, dx, dy, buttons, modifiers):
 	global rx, ry
@@ -426,6 +335,7 @@ def on_mouse_drag(x, y, dx, dy, buttons, modifiers):
 		ry %= 360
 
 
+# Zoom the window
 @window.event
 def on_mouse_scroll(x, y, scroll_x, scroll_y):
 	global dz
@@ -438,4 +348,11 @@ os.chdir('fox/')
 fox = pyglet.model.load("low-poly-fox-by-pixelmannen.obj", batch=batch)
 fox_model = CustomModel(fox.vertex_lists[0])
 fox_model.rescale(4)
+fox_model.translate_y(0.58, -1)
+
+# Add keystate handler (breaks if you put this sooner in the code)
+keys = key.KeyStateHandler()
+window.push_handlers(keys)
+
+# Run the animation!
 pyglet.app.run()
