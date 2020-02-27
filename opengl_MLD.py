@@ -37,7 +37,7 @@ def setup():
 	glEnable(GL_CULL_FACE)
 
 	# Wireframe view
-	#glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
 
 	# Simple light setup
 	glEnable(GL_LIGHTING)
@@ -115,6 +115,18 @@ def create_torus(radius, inner_radius, slices, inner_slices, batch, color='purpl
 	return vertex_list
 
 
+# Class to keep track of model and associated attributes
+class CustomModel:
+
+	# Constructor
+	def __init__(self, vertex_list):
+		self.vertex_list = vertex_list
+
+	# Destructor
+	def __delete__(self):
+		vertex_list.delete()
+
+
 # Setup window and batch
 setup()
 batch = pyglet.graphics.Batch()
@@ -155,17 +167,17 @@ def trans_torus_y(dt, rate):
 
 # Translate existing vertex list
 def trans_torus():
-	
+
 	# Reshape vertices into Nx3 array
 	length = origin_vertices_1.shape[0]
 	reshaped = np.reshape(origin_vertices_1, (length//3, 3))
 	reshaped += center_vertices_1
 	ravelled = np.ravel(reshaped)
-	
+
 	# Debug
 	if origin_vertices_1.shape != ravelled.shape:
 		raise ValueError('You messed up sir.')
-	
+
 	# Update the vertices
 	torus_model_1.vertices = ravelled
 
@@ -213,7 +225,7 @@ def on_key_press(symbol, modifiers):
 
 		else:
 			random_torus(None, 'blue')
-	
+
 	# Translate the camera
 	elif symbol == key.UP:
 		if keys[key.DOWN]:
@@ -234,7 +246,7 @@ def on_key_press(symbol, modifiers):
 		if keys[key.RIGHT]:
 			pyglet.clock.unschedule(trans_camera_x)
 		pyglet.clock.schedule(trans_camera_x, rate=-cam_rate)
-		
+
 	# Translate the torus
 	elif symbol == key.W:
 		if keys[key.S]:
@@ -275,7 +287,7 @@ def on_key_release(symbol, modifiers):
 	elif symbol == key.LEFT:
 		if not keys[key.RIGHT]:
 			pyglet.clock.unschedule(trans_camera_x)
-	
+
 	# Reset the torus
 	elif symbol == key.W:
 		if not keys[key.S]:
@@ -304,20 +316,20 @@ window.push_handlers(keys)
 
 @window.event
 def on_mouse_press(x, y, button, modifiers):
-	
+
 	if button & mouse.LEFT:
-		
+
 		if keys[key.A]:
-			
+
 			random_torus(None, 'grey')
 
 
 @window.event
 def on_mouse_drag(x, y, dx, dy, buttons, modifiers):
 	global rx, ry
-	
+
 	if buttons & mouse.LEFT:
-	
+
 		rx += -dy
 		ry += dx
 		rx %= 360
