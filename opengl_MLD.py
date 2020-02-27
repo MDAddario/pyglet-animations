@@ -127,10 +127,10 @@ class CustomModel:
 		self.vertices = []
 		self.vertices.extend(self.vertex_list.vertices)
 		self.vertices = np.reshape(self.vertices, (num_vertices, 3))
-		
+
 		# Define classical mechanics
 		self.position = np.zeros(3)
-		self.velocity = 0.2
+		self.speed = 2.0
 
 	# Destructor
 	def __delete__(self):
@@ -167,16 +167,16 @@ class CustomModel:
 		self.__scale_vertices(scaling, scaling, scaling)
 
 	# Translate along x axis
-	def translate_x(self, dt):
-		__translate_vertices(dt * self.velocity, 0, 0)
+	def translate_x(self, dt, sign):
+		self.__translate_vertices(dt * self.speed * sign, 0, 0)
 
 	# Translate along y axis
-	def translate_y(self, dt):
-		__translate_vertices(0, dt * self.velocity, 0)
+	def translate_y(self, dt, sign):
+		self.__translate_vertices(0, dt * self.speed * sign, 0)
 
 	# Translate along z axis
-	def translate_z(self, dt):
-		__translate_vertices(0, 0, dt * self.velocity)
+	def translate_z(self, dt, sign):
+		self.__translate_vertices(0, 0, dt * self.speed * sign)
 
 
 # Setup window and batch
@@ -320,6 +320,27 @@ def on_key_press(symbol, modifiers):
 			pyglet.clock.unschedule(trans_torus_x)
 		pyglet.clock.schedule(trans_torus_x, rate=-tor_rate)
 
+	# Translate the fox
+	elif symbol == key.I:
+		if keys[key.K]:
+			pyglet.clock.unschedule(fox_model.translate_y)
+		pyglet.clock.schedule(fox_model.translate_y, sign=+1)
+
+	elif symbol == key.K:
+		if keys[key.I]:
+			pyglet.clock.unschedule(fox_model.translate_y)
+		pyglet.clock.schedule(fox_model.translate_y, sign=-1)
+
+	elif symbol == key.L:
+		if keys[key.J]:
+			pyglet.clock.unschedule(fox_model.translate_x)
+		pyglet.clock.schedule(fox_model.translate_x, sign=+1)
+
+	elif symbol == key.J:
+		if keys[key.L]:
+			pyglet.clock.unschedule(fox_model.translate_x)
+		pyglet.clock.schedule(fox_model.translate_x, sign=-1)
+
 @window.event
 def on_key_release(symbol, modifiers):
 
@@ -356,6 +377,23 @@ def on_key_release(symbol, modifiers):
 	elif symbol == key.A:
 		if not keys[key.D]:
 			pyglet.clock.unschedule(trans_torus_x)
+
+	# Reset the fox
+	elif symbol == key.I:
+		if not keys[key.K]:
+			pyglet.clock.unschedule(fox_model.translate_y)
+
+	elif symbol == key.K:
+		if not keys[key.I]:
+			pyglet.clock.unschedule(fox_model.translate_y)
+
+	elif symbol == key.L:
+		if not keys[key.J]:
+			pyglet.clock.unschedule(fox_model.translate_x)
+
+	elif symbol == key.J:
+		if not keys[key.L]:
+			pyglet.clock.unschedule(fox_model.translate_x)
 
 
 # Accept mouse input
