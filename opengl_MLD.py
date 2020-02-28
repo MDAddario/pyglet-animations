@@ -31,7 +31,6 @@ def on_draw():
 
 # One time setup
 def setup():
-
 	glClearColor(1, 1, 1, 1)
 	glColor3f(1, 0, 0)
 	glEnable(GL_DEPTH_TEST)
@@ -151,6 +150,11 @@ class CustomModel:
 		self.vertices[:,2] += trans_z
 		self.vertex_list.vertices = np.copy(np.ravel(self.vertices))
 
+	# Update model position while velocity is non-zero
+	def update(self, dt):
+		if not np.allclose(self.velocity, 0):
+			self.__translate_vertices(*(dt * self.velocity))
+
 	# Rescale total object size
 	def rescale(self, new_size):
 
@@ -171,11 +175,6 @@ class CustomModel:
 	def set_velocity(self, xi, sign):
 		self.velocity[xi] = self.max_speed * sign
 
-	# Update model position while velocity is non-zero
-	def update(self, dt):
-		if not np.allclose(self.velocity, 0):
-			self.__translate_vertices(*(dt * self.velocity))
-
 	# Translate model by given input
 	def translate(self, dx, dy, dz):
 		self.__translate_vertices(dx, dy, dz)
@@ -195,11 +194,12 @@ torus_model = create_torus(radius=0.6, inner_radius=0.2, slices=50,
 						   inner_slices=30, batch=batch, color='red')
 
 
-# Update every frame (required to make clock vary smoothly)
+# Update every frame
 def update(dt):
 	fox_model.update(dt)
 
 
+# Schedule the ever-important update function
 pyglet.clock.schedule(update)
 
 
@@ -208,6 +208,7 @@ cam_rate = 0.7
 zoom_rate = 0.25
 
 
+# Take care of camera movement
 def translate_camera_x(dt, rate):
 	global dx
 	dx += dt * rate * dz
@@ -221,8 +222,16 @@ def translate_camera_y(dt, rate):
 @window.event
 def on_key_press(symbol, modifiers):
 
+	# Delete the torus
+	if symbol == key.SPACE:
+
+		try:
+			torus_model.delete()
+		except:
+			pass
+
 	# Translate the camera
-	if symbol == key.UP:
+	elif symbol == key.UP:
 		if keys[key.DOWN]:
 			pyglet.clock.unschedule(translate_camera_y)
 		pyglet.clock.schedule(translate_camera_y, rate=cam_rate)
