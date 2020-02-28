@@ -48,7 +48,7 @@ def setup():
 
 
 # Create a torus
-def create_torus(radius, inner_radius, slices, inner_slices, batch, color='purple'):
+def create_torus(radius, inner_radius, slices, inner_slices, batch, color=None):
 
 	# Create the vertex and normal arrays.
 	vertices = []
@@ -97,7 +97,7 @@ def create_torus(radius, inner_radius, slices, inner_slices, batch, color='purpl
 	elif color == 'blue':
 		diffuse = [0.0, 0.0, 1.0, 1.0]
 	else:
-		diffuse = [0.5, 0.5, 0.5, 1.0]
+		diffuse = [0.0, 0.0, 0.0, 1.0]
 
 	# Create a Material and Group for the Model
 	ambient = [0.5, 0.0, 0.3, 1.0]
@@ -131,7 +131,8 @@ class CustomModel:
 		self.vertices = np.reshape(self.vertices, (num_vertices, 3))
 
 		# Define classical mechanics
-		self.speed = 2.0
+		self.velocity = np.zeros(3)
+		self.max_speed = 2.0
 
 	# Destructor
 	def __delete__(self):
@@ -167,17 +168,18 @@ class CustomModel:
 		scaling = new_size / max_dist
 		self.__scale_vertices(scaling, scaling, scaling)
 
-	# Translate along x axis
-	def translate_x(self, dt, sign):
-		self.__translate_vertices(dt * self.speed * sign, 0, 0)
+	# Set velocity values
+	def set_velocity(self, xi, sign):
+		self.velocity[xi] = self.max_speed * sign
 
-	# Translate along y axis
-	def translate_y(self, dt, sign):
-		self.__translate_vertices(0, dt * self.speed * sign, 0)
+	# Update model position while velocity is non-zero
+	def update(self, dt):
+		if not np.allclose(self.velocity, 0):
+			self.__translate_vertices(*(dt * self.velocity))
 
-	# Translate along z axis
-	def translate_z(self, dt, sign):
-		self.__translate_vertices(0, 0, dt * self.speed * sign)
+	# Translate model by given input
+	def translate(self, dx, dy, dz):
+		self.__translate_vertices(dx, dy, dz)
 
 
 # Setup window and batch
@@ -191,12 +193,13 @@ dz = -8
 
 # Generate sample toruses
 torus_model = create_torus(radius=0.6, inner_radius=0.2, slices=50, 
-						   inner_slices=30, batch=batch)
+						   inner_slices=30, batch=batch, color='red')
 
 
 # Update every frame (required to make clock vary smoothly)
 def update(dt):
-	pass
+	fox_model.update(dt)
+
 
 pyglet.clock.schedule(update)
 
@@ -253,23 +256,23 @@ def on_key_press(symbol, modifiers):
 	# Translate the fox
 	elif symbol == key.W:
 		if keys[key.S]:
-			pyglet.clock.unschedule(fox_model.translate_y)
-		pyglet.clock.schedule(fox_model.translate_y, sign=+1)
+			fox_model.set_velocity(1, 0)
+		fox_model.set_velocity(1, +1)
 
 	elif symbol == key.S:
 		if keys[key.W]:
-			pyglet.clock.unschedule(fox_model.translate_y)
-		pyglet.clock.schedule(fox_model.translate_y, sign=-1)
+			fox_model.set_velocity(1, 0)
+		fox_model.set_velocity(1, -1)
 
 	elif symbol == key.D:
 		if keys[key.A]:
-			pyglet.clock.unschedule(fox_model.translate_x)
-		pyglet.clock.schedule(fox_model.translate_x, sign=+1)
+			fox_model.set_velocity(0, 0)
+		fox_model.set_velocity(0, +1)
 
 	elif symbol == key.A:
 		if keys[key.D]:
-			pyglet.clock.unschedule(fox_model.translate_x)
-		pyglet.clock.schedule(fox_model.translate_x, sign=-1)
+			fox_model.set_velocity(0, 0)
+		fox_model.set_velocity(0, -1)
 
 
 @window.event
@@ -295,19 +298,19 @@ def on_key_release(symbol, modifiers):
 	# Reset the fox
 	elif symbol == key.W:
 		if not keys[key.S]:
-			pyglet.clock.unschedule(fox_model.translate_y)
+			fox_model.set_velocity(1, 0)
 
 	elif symbol == key.S:
 		if not keys[key.W]:
-			pyglet.clock.unschedule(fox_model.translate_y)
+			fox_model.set_velocity(1, 0)
 
 	elif symbol == key.D:
 		if not keys[key.A]:
-			pyglet.clock.unschedule(fox_model.translate_x)
+			fox_model.set_velocity(0, 0)
 
 	elif symbol == key.A:
 		if not keys[key.D]:
-			pyglet.clock.unschedule(fox_model.translate_x)
+			fox_model.set_velocity(0, 0)
 
 
 '''
@@ -348,7 +351,7 @@ os.chdir('fox/')
 fox = pyglet.model.load("low-poly-fox-by-pixelmannen.obj", batch=batch)
 fox_model = CustomModel(fox.vertex_lists[0])
 fox_model.rescale(4)
-fox_model.translate_y(0.58, -1)
+fox_model.translate(0, -1.18, 0)
 
 # Add keystate handler (breaks if you put this sooner in the code)
 keys = key.KeyStateHandler()
