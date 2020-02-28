@@ -1,4 +1,3 @@
-from math import pi, sin, cos
 import pyglet
 from pyglet.gl import *
 from pyglet.window import key
@@ -54,16 +53,16 @@ def create_torus(radius, inner_radius, slices, inner_slices, batch, color=None):
 	vertices = []
 	normals = []
 
-	u_step = 2 * pi / (slices - 1)
-	v_step = 2 * pi / (inner_slices - 1)
+	u_step = 2 * np.pi / (slices - 1)
+	v_step = 2 * np.pi / (inner_slices - 1)
 	u = 0.
 	for i in range(slices):
-		cos_u = cos(u)
-		sin_u = sin(u)
+		cos_u = np.cos(u)
+		sin_u = np.sin(u)
 		v = 0.
 		for j in range(inner_slices):
-			cos_v = cos(v)
-			sin_v = sin(v)
+			cos_v = np.cos(v)
+			sin_v = np.sin(v)
 
 			d = (radius + inner_radius * cos_v)
 			x = d * cos_u
