@@ -1,10 +1,10 @@
 from math import pi, sin, cos
 import pyglet
 from pyglet.gl import *
-import numpy as np
-import os
 from pyglet.window import key
 from pyglet.window import mouse
+import numpy as np
+import os
 
 try:
 	# Try and create a window with multisampling (antialiasing)
@@ -222,16 +222,6 @@ def translate_camera_y(dt, rate):
 @window.event
 def on_key_press(symbol, modifiers):
 
-	'''
-	if symbol == key.SPACE:
-
-		if modifiers & key.MOD_SHIFT:
-			random_torus(None, 'red')
-
-		else:
-			random_torus(None, 'blue')
-	'''
-
 	# Translate the camera
 	if symbol == key.UP:
 		if keys[key.DOWN]:
@@ -313,29 +303,24 @@ def on_key_release(symbol, modifiers):
 			fox_model.set_velocity(0, 0)
 
 
-'''
-@window.event
-def on_mouse_press(x, y, button, modifiers):
-
-	if button & mouse.LEFT:
-
-		if keys[key.A]:
-
-			do_function(arguments)
-'''
-
-
 # Rotate the window
 @window.event
 def on_mouse_drag(x, y, dx, dy, buttons, modifiers):
-	global rx, ry
+	global rx, ry, rz
 
 	if buttons & mouse.LEFT:
 
-		rx += -dy
-		ry += dx
-		rx %= 360
-		ry %= 360
+		if modifiers & key.MOD_SHIFT:
+
+			rz += dy
+			rz %= 360
+
+		else:
+
+			rx += -dy
+			ry += dx
+			rx %= 360
+			ry %= 360
 
 
 # Zoom the window
