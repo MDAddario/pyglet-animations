@@ -115,6 +115,56 @@ def create_torus(radius, inner_radius, slices, inner_slices, batch, color=None):
 	return vertex_list
 
 
+# Create two floating triangles
+def triangle_practice(batch):
+
+	size = 1.5
+
+	# Create the vertex and normal arrays.
+	vertices = []
+	normals = []
+	
+	# Populate the vertices array
+	vertices.extend([-size, +size, 0])
+	vertices.extend([-size, -size, 0])
+	vertices.extend([-0, -0, 0])
+	
+	vertices.extend([+size, -size, 0])
+	vertices.extend([+size, +size, 0])
+	vertices.extend([+0, +0, 0])
+	
+	# Populate the normals array
+	z_normal = [0.1, 0.1, 0.98]
+		
+	for i in range(6):
+		normals.extend(z_normal)
+
+	# Create a list of triangle indices.
+	indices = []
+	indices.extend([0, 1, 2])
+	indices.extend([3, 4, 5])
+	indices.extend([0, 2, 1])
+	indices.extend([3, 5, 4])
+
+	# Create a Material and Group for the Model
+	diffuse = [0.5, 0.0, 0.3, 1.0]
+	ambient = [0.5, 0.0, 0.3, 1.0]
+	specular = [1.0, 1.0, 1.0, 1.0]
+	emission = [0.0, 0.0, 0.0, 1.0]
+	shininess = 50
+	material = pyglet.model.Material("", diffuse, ambient, specular, emission, shininess)
+	group = pyglet.model.MaterialGroup(material=material)
+
+	vertex_list = batch.add_indexed(len(vertices)//3,
+									GL_TRIANGLES,
+									group,
+									indices,
+									('v3f/dynamic', vertices),
+									('n3f/static', normals))
+
+	return vertex_list
+
+
 # Class to keep track of model and associated attributes
 class CustomModel:
 
@@ -193,6 +243,9 @@ dz = -8
 torus_model = create_torus(radius=0.6, inner_radius=0.2, slices=50, 
 						   inner_slices=30, batch=batch, color='red')
 
+# Generate sample triangles
+triangle_model = triangle_practice(batch=batch)
+
 
 # Update every frame
 def update(dt):
@@ -205,7 +258,6 @@ pyglet.clock.schedule(update)
 
 # Translation speeds
 cam_rate = 0.7
-zoom_rate = 0.25
 
 
 # Take care of camera movement
@@ -335,7 +387,7 @@ def on_mouse_drag(x, y, dx, dy, buttons, modifiers):
 @window.event
 def on_mouse_scroll(x, y, scroll_x, scroll_y):
 	global dz
-	dz -= scroll_y * dz * zoom_rate
+	dz -= scroll_y * dz * 0.25
 	dz = min(dz, 0)
 
 
