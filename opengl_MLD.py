@@ -135,10 +135,10 @@ def triangle_practice(batch):
 	
 	# Populate the normals array
 	z_normal = [0.1, 0.1, 0.98]
-		
+	
 	for i in range(6):
 		normals.extend(z_normal)
-
+	
 	# Create a list of triangle indices.
 	indices = []
 	indices.extend([0, 1, 2])
@@ -166,20 +166,26 @@ def triangle_practice(batch):
 
 
 # Create floating rectanles
-def quad_practice(batch):
-
-	# Box dimensions
-	x_size = 2.0 
-	y_size = 2.0
-	z_size = 2.0
+def quad_practice(size, center, batch):
 	
-	# Box center
-	center = np.array([0, -3, 0])
+	# Convert to array objects
+	size = np.asarray(size)
+	center = np.asarray(center)
+	
+	# Error check
+	if np.any(size <= 0):
+		raise ValueError("Size values must be strictly positive")
+	if size.shape != (3,):
+		raise ValueError("Size must be a 1D array, 3 in length")
+	if center.shape != (3,):
+		raise ValueError("Center must be a 1D array, 3 in length")
+	
+	# Offset parameter
+	offset = center - size / 2
 
-	# Create the vertex and normal arrays.
+	# Create the vertex and normal arrays
 	vertices = []
 	normals = []
-	indices = []
 	
 	# Have some standard normals
 	x_normal = np.array([0.98, 0.1, 0.1])
@@ -187,60 +193,61 @@ def quad_practice(batch):
 	z_normal = np.array([0.1, 0.1, 0.98])
 	
 	# Front face
-	vertices.extend([     0,      0, z_size])
-	vertices.extend([x_size,      0, z_size])
-	vertices.extend([x_size, y_size, z_size])
-	vertices.extend([     0, y_size, z_size])
+	vertices.extend(np.array([0, 0, 1] * size + offset))
+	vertices.extend(np.array([1, 0, 1] * size + offset))
+	vertices.extend(np.array([1, 1, 1] * size + offset))
+	vertices.extend(np.array([0, 1, 1] * size + offset))
 	
 	for i in range(4):
 		normals.extend(z_normal)
 	
 	# Back face
-	vertices.extend([     0,      0, 0])
-	vertices.extend([     0, y_size, 0])
-	vertices.extend([x_size, y_size, 0])
-	vertices.extend([x_size,      0, 0])
+	vertices.extend(np.array([0, 0, 0] * size + offset))
+	vertices.extend(np.array([0, 1, 0] * size + offset))
+	vertices.extend(np.array([1, 1, 0] * size + offset))
+	vertices.extend(np.array([1, 0, 0] * size + offset))
 	
 	for i in range(4):
 		normals.extend(-z_normal)
 	
 	# Top face
-	vertices.extend([     0, y_size,      0])
-	vertices.extend([     0, y_size, z_size])
-	vertices.extend([x_size, y_size, z_size])
-	vertices.extend([x_size, y_size,      0])
+	vertices.extend(np.array([0, 1, 0] * size + offset))
+	vertices.extend(np.array([0, 1, 1] * size + offset))
+	vertices.extend(np.array([1, 1, 1] * size + offset))
+	vertices.extend(np.array([1, 1, 0] * size + offset))
 	
 	for i in range(4):
 		normals.extend(y_normal)
 	
 	# Bot face
-	vertices.extend([     0, 0,      0])
-	vertices.extend([x_size, 0,      0])
-	vertices.extend([x_size, 0, z_size])
-	vertices.extend([     0, 0, z_size])
+	vertices.extend(np.array([0, 0, 0] * size + offset))
+	vertices.extend(np.array([1, 0, 0] * size + offset))
+	vertices.extend(np.array([1, 0, 1] * size + offset))
+	vertices.extend(np.array([0, 0, 1] * size + offset))
 	
 	for i in range(4):
 		normals.extend(-y_normal)
 	
 	# Right face
-	vertices.extend([x_size,      0,      0])
-	vertices.extend([x_size, y_size,      0])
-	vertices.extend([x_size, y_size, z_size])
-	vertices.extend([x_size,      0, z_size])
+	vertices.extend(np.array([1, 0, 0] * size + offset))
+	vertices.extend(np.array([1, 1, 0] * size + offset))
+	vertices.extend(np.array([1, 1, 1] * size + offset))
+	vertices.extend(np.array([1, 0, 1] * size + offset))
 	
 	for i in range(4):
 		normals.extend(x_normal)
 	
 	# Left face
-	vertices.extend([0,      0,      0])
-	vertices.extend([0,      0, z_size])
-	vertices.extend([0, y_size, z_size])
-	vertices.extend([0, y_size,      0])
+	vertices.extend(np.array([0, 0, 0] * size + offset))
+	vertices.extend(np.array([0, 0, 1] * size + offset))
+	vertices.extend(np.array([0, 1, 1] * size + offset))
+	vertices.extend(np.array([0, 1, 0] * size + offset))
 	
 	for i in range(4):
 		normals.extend(-x_normal)
 		
 	# Do the indices too
+	indices = []
 	for i in range(len(vertices)):
 		indices.append(i)
 
@@ -343,7 +350,7 @@ torus_model = create_torus(radius=0.6, inner_radius=0.2, slices=50,
 
 # Generate sample polygons
 triangle_model = triangle_practice(batch=batch)
-quadrilat_model = quad_practice(batch=batch)
+quadrilat_model = quad_practice(size=[8.0, 0.5, 3.0], center=[0, -3, 0], batch=batch)
 
 
 # Update every frame
