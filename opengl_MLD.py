@@ -159,7 +159,105 @@ def triangle_practice(batch):
 									GL_TRIANGLES,
 									group,
 									indices,
-									('v3f/dynamic', vertices),
+									('v3f/static', vertices),
+									('n3f/static', normals))
+
+	return vertex_list
+
+
+# Create floating rectanles
+def quad_practice(batch):
+
+	# Box dimensions
+	x_size = 2.0 
+	y_size = 2.0
+	z_size = 2.0
+	
+	# Box center
+	center = np.array([0, -3, 0])
+
+	# Create the vertex and normal arrays.
+	vertices = []
+	normals = []
+	indices = []
+	
+	# Have some standard normals
+	x_normal = np.array([0.98, 0.1, 0.1])
+	y_normal = np.array([0.1, 0.98, 0.1])
+	z_normal = np.array([0.1, 0.1, 0.98])
+	
+	# Front face
+	vertices.extend([     0,      0, z_size])
+	vertices.extend([x_size,      0, z_size])
+	vertices.extend([x_size, y_size, z_size])
+	vertices.extend([     0, y_size, z_size])
+	
+	for i in range(4):
+		normals.extend(z_normal)
+	
+	# Back face
+	vertices.extend([     0,      0, 0])
+	vertices.extend([     0, y_size, 0])
+	vertices.extend([x_size, y_size, 0])
+	vertices.extend([x_size,      0, 0])
+	
+	for i in range(4):
+		normals.extend(-z_normal)
+	
+	# Top face
+	vertices.extend([     0, y_size,      0])
+	vertices.extend([     0, y_size, z_size])
+	vertices.extend([x_size, y_size, z_size])
+	vertices.extend([x_size, y_size,      0])
+	
+	for i in range(4):
+		normals.extend(y_normal)
+	
+	# Bot face
+	vertices.extend([     0, 0,      0])
+	vertices.extend([x_size, 0,      0])
+	vertices.extend([x_size, 0, z_size])
+	vertices.extend([     0, 0, z_size])
+	
+	for i in range(4):
+		normals.extend(-y_normal)
+	
+	# Right face
+	vertices.extend([x_size,      0,      0])
+	vertices.extend([x_size, y_size,      0])
+	vertices.extend([x_size, y_size, z_size])
+	vertices.extend([x_size,      0, z_size])
+	
+	for i in range(4):
+		normals.extend(x_normal)
+	
+	# Left face
+	vertices.extend([0,      0,      0])
+	vertices.extend([0,      0, z_size])
+	vertices.extend([0, y_size, z_size])
+	vertices.extend([0, y_size,      0])
+	
+	for i in range(4):
+		normals.extend(-x_normal)
+		
+	# Do the indices too
+	for i in range(len(vertices)):
+		indices.append(i)
+
+	# Create a Material and Group for the Model
+	diffuse = [0.0, 0.4, 0.9, 1.0]
+	ambient = [0.5, 0.0, 0.3, 1.0]
+	specular = [1.0, 1.0, 1.0, 1.0]
+	emission = [0.0, 0.0, 0.0, 1.0]
+	shininess = 50
+	material = pyglet.model.Material("", diffuse, ambient, specular, emission, shininess)
+	group = pyglet.model.MaterialGroup(material=material)
+
+	vertex_list = batch.add_indexed(len(vertices)//3,
+									GL_QUADS,
+									group,
+									indices,
+									('v3f/static', vertices),
 									('n3f/static', normals))
 
 	return vertex_list
@@ -243,8 +341,9 @@ dz = -8
 torus_model = create_torus(radius=0.6, inner_radius=0.2, slices=50, 
 						   inner_slices=30, batch=batch, color='red')
 
-# Generate sample triangles
+# Generate sample polygons
 triangle_model = triangle_practice(batch=batch)
+quadrilat_model = quad_practice(batch=batch)
 
 
 # Update every frame
