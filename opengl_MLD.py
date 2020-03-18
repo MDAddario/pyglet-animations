@@ -166,7 +166,7 @@ def triangle_practice(batch):
 
 
 # Create floating rectanles
-def quad_practice(size, center, batch):
+def box_creator(size, center, batch):
 	
 	# Convert to array objects
 	size = np.asarray(size)
@@ -182,7 +182,7 @@ def quad_practice(size, center, batch):
 	
 	# Offset parameter
 	offset = center - size / 2
-
+	
 	# Create the vertex and normal arrays
 	vertices = []
 	normals = []
@@ -270,6 +270,28 @@ def quad_practice(size, center, batch):
 	return vertex_list
 
 
+def battlefield_creator(batch):
+	
+	# Keep track of all platforms
+	vertex_lists = []
+
+	# Platform dimensions
+	base_size    = [16.0, 0.8, 3.0]
+	base_center  = [ 0.0, 0.0, 0.0]
+	plat_size    = [ 4.0, 0.3, 2.5]
+	left_center  = [-5.0, 3.0, 0.0]
+	right_center = [ 5.0, 3.0, 0.0]
+	top_center   = [ 0.0, 5.0, 0.0]
+	
+	# Create all platforms
+	vertex_lists.append(box_creator(base_size, base_center,  batch))
+	vertex_lists.append(box_creator(plat_size, left_center,  batch))
+	vertex_lists.append(box_creator(plat_size, right_center, batch))
+	vertex_lists.append(box_creator(plat_size, top_center,   batch))
+	
+	return vertex_lists
+
+
 # Class to keep track of model and associated attributes
 class CustomModel:
 
@@ -350,8 +372,7 @@ torus_model = create_torus(radius=0.6, inner_radius=0.2, slices=50,
 
 # Generate sample polygons
 triangle_model = triangle_practice(batch=batch)
-quadrilat_model = quad_practice(size=[8.0, 0.5, 3.0], center=[0, -3, 0], batch=batch)
-
+battlefield_lists = battlefield_creator(batch)
 
 # Update every frame
 def update(dt):
