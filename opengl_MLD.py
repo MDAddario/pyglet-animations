@@ -298,10 +298,11 @@ def battlefield_creator(batch):
 class CharacterModel:
 
 	# Constructor
-	def __init__(self, vertex_list, center=None):
+	def __init__(self, vertex_list, keys, center=None):
 		
-		# Store as instance attribute
+		# Store as instance attributes
 		self.vertex_list = vertex_list
+		self.keys = keys
 
 		# Extract a deepcopy of vertices formatted as Nx3 array
 		num_vertices = self.vertex_list.vertices.size // 3
@@ -310,8 +311,9 @@ class CharacterModel:
 		self.vertices = np.reshape(self.vertices, (num_vertices, 3))
 
 		# Define classical mechanics
+		self.force = 50.0
+		self.max_speed = 50.0
 		self.velocity = np.zeros(3)
-		self.max_speed = 10.0
 		
 		# Include the center of all coordinate transforms
 		if center is not None:
@@ -373,19 +375,29 @@ class CharacterModel:
 		self.__rotate_vertices(r)
 		self.__translate_vertices(old_center)
 
-	# Update model position while velocity is non-zero
-	def update(self, dt):
-		if not np.allclose(self.velocity, 0):
-			self.__translate_vertices(dt * self.velocity)
-
-	# Set velocity values
-	def set_velocity(self, xi, sign):
-		self.velocity[xi] = self.max_speed * sign
-
 	# Set the position of the model
 	def set_position(self, position):
 		self.__translate_vertices(position - self.center)
-
+	
+	# Update model position based off keyboard input
+	def update(self, dt):
+		
+		# Drive the system by user input
+		if self.keys[key.W]:
+			self.velocity[1] += self.force * dt
+		if self.keys[key.S]:
+			self.velocity[1] -= self.force * dt
+		if self.keys[key.D]:
+			self.velocity[0] += self.force * dt
+		if self.keys[key.A]:
+			self.velocity[0] -= self.force * dt
+		
+		# Force maximum velocity
+		np.clip(self.velocity, -self.max_speed, self.max_speed, out=self.velocity)
+		
+		# Move player for non-zero velocity
+		if not np.allclose(self.velocity, 0):
+			self.__translate_vertices(dt * self.velocity)
 
 # Setup window and batch
 setup()
@@ -454,27 +466,6 @@ def on_key_press(symbol, modifiers):
 			pyglet.clock.unschedule(translate_camera_x)
 		pyglet.clock.schedule(translate_camera_x, rate=-cam_rate)
 
-	# Translate the fox
-	elif symbol == key.W:
-		if keys[key.S]:
-			fox_model.set_velocity(1, 0)
-		fox_model.set_velocity(1, +1)
-
-	elif symbol == key.S:
-		if keys[key.W]:
-			fox_model.set_velocity(1, 0)
-		fox_model.set_velocity(1, -1)
-
-	elif symbol == key.D:
-		if keys[key.A]:
-			fox_model.set_velocity(0, 0)
-		fox_model.set_velocity(0, +1)
-
-	elif symbol == key.A:
-		if keys[key.D]:
-			fox_model.set_velocity(0, 0)
-		fox_model.set_velocity(0, -1)
-
 
 @window.event
 def on_key_release(symbol, modifiers):
@@ -495,23 +486,6 @@ def on_key_release(symbol, modifiers):
 	elif symbol == key.LEFT:
 		if not keys[key.RIGHT]:
 			pyglet.clock.unschedule(translate_camera_x)
-
-	# Reset the fox
-	elif symbol == key.W:
-		if not keys[key.S]:
-			fox_model.set_velocity(1, 0)
-
-	elif symbol == key.S:
-		if not keys[key.W]:
-			fox_model.set_velocity(1, 0)
-
-	elif symbol == key.D:
-		if not keys[key.A]:
-			fox_model.set_velocity(0, 0)
-
-	elif symbol == key.A:
-		if not keys[key.D]:
-			fox_model.set_velocity(0, 0)
 
 
 # Rotate the window
@@ -541,20 +515,19 @@ def on_mouse_scroll(x, y, scroll_x, scroll_y):
 	dz -= scroll_y * dz * 0.25
 	dz = min(dz, 0)
 
+# Add keystate handler (breaks if you put this sooner in the code)
+keys = key.KeyStateHandler()
+window.push_handlers(keys)
 
 # Load 3D fox model
 os.chdir('fox/')
 fox = pyglet.model.load("low-poly-fox-by-pixelmannen.obj", batch=batch)
-fox_model = CharacterModel(fox.vertex_lists[0])
+fox_model = CharacterModel(fox.vertex_lists[0], keys)
 
 # Configure initial conditions for fox model
 fox_model.rescale(2)
 fox_model.set_position([-5, 1.2, 0])
 fox_model.rotate_degrees('y', 90)
-
-# Add keystate handler (breaks if you put this sooner in the code)
-keys = key.KeyStateHandler()
-window.push_handlers(keys)
 
 # Run the animation!
 pyglet.app.run()
