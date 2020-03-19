@@ -480,10 +480,10 @@ def update(dt):
 			xi = np.argmax(separation)
 			
 			# Eject body
-			new_position = np.copy(stage_model.center)
+			new_position = np.copy(fox_model.center)
 			sign = np.sign(fox_model.center[xi] - stage_model.center[xi])
 			displacement = stage_model.ecb_dims[xi] + fox_model.ecb_dims[xi]
-			new_position[xi] += sign * displacement
+			new_position[xi] = stage_model.center[xi] + sign * displacement
 			fox_model.set_position(new_position)
 			
 			# Set velocity to zero
