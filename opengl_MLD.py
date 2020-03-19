@@ -293,7 +293,7 @@ def battlefield_creator(batch):
 
 
 # Class to keep track of model and associated attributes
-class CustomModel:
+class CharacterModel:
 
 	# Constructor
 	def __init__(self, vertex_list, center=None):
@@ -315,12 +315,8 @@ class CustomModel:
 		if center is not None:
 			self.center = center
 		else:
-			self.center = self.__determine_center()
+			self.center = np.mean(self.vertices, axis=0)
 	
-	# Determine the center
-	def __determine_center(self):
-		pass
-
 	# Destructor
 	def __delete__(self):
 		vertex_list.delete()
@@ -365,9 +361,9 @@ class CustomModel:
 		else:
 			self.velocity[xi] = -self.max_speed
 
-	# Translate model by given input
-	def translate(self, translation):
-		self.__translate_vertices(translation)
+	# Set the position of the model
+	def set_position(self, position):
+		self.__translate_vertices(position - self.center)
 
 
 # Setup window and batch
@@ -534,9 +530,9 @@ def on_mouse_scroll(x, y, scroll_x, scroll_y):
 # Include 3D models
 os.chdir('fox/')
 fox = pyglet.model.load("low-poly-fox-by-pixelmannen.obj", batch=batch)
-fox_model = CustomModel(fox.vertex_lists[0])
-fox_model.rescale(4)
-fox_model.translate(0, -1.18, 0)
+fox_model = CharacterModel(fox.vertex_lists[0])
+fox_model.rescale(2)
+fox_model.set_position([0, 0, 0])
 
 # Add keystate handler (breaks if you put this sooner in the code)
 keys = key.KeyStateHandler()
