@@ -474,7 +474,20 @@ def update(dt):
 						- (stage_model.ecb_dims[0:2] + fox_model.ecb_dims[0:2])
 		
 		# Check for negative separations
-		fox_model.velocity[0:2] = np.where(separation < 0, 0, fox_model.velocity[0:2])
+		if np.all(separation < 0):
+		
+			# Decide along which axis to eject the body
+			xi = np.argmax(separation)
+			
+			# Eject body
+			new_position = np.copy(stage_model.center)
+			sign = np.sign(fox_model.center[xi] - stage_model.center[xi])
+			displacement = stage_model.ecb_dims[xi] + fox_model.ecb_dims[xi]
+			new_position[xi] += sign * displacement
+			fox_model.set_position(new_position)
+			
+			# Set velocity to zero
+			fox_model.velocity[xi] = 0
 
 if __name__ == "__main__":
 
