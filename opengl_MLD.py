@@ -236,6 +236,7 @@ def battlefield_creator(batch, color="blue"):
 	ecb_list = []
 	for vertex_list in vertex_lists:
 		ecb_list.append(CharacterModel(batch, vertex_list, dead))
+		ecb_list[-1].show_ecb()
 	
 	return vertex_lists, ecb_list
 
@@ -277,7 +278,7 @@ class CharacterModel:
 	# Determine ecb dimensions from the vertices
 	def __compute_ecb_dims(self):
 		self.ecb_dims = np.max(self.vertices, axis=0) - np.min(self.vertices, axis=0)
-		self.ecb_dims *= 3 / 2
+		#self.ecb_dims *= 2 / 3
 	
 	# Destructor
 	def __delete__(self):
@@ -483,10 +484,6 @@ if __name__ == "__main__":
 	# Generate sample polygons
 	tri_vertex_list = triangle_practice(batch)
 	stage_vertex_lists, stage_ecb_list = battlefield_creator(batch)
-	
-	# DO IT FOR THE QUEEN
-	for stage_vertex_list in stage_vertex_lists:
-		stage_vertex_list.delete()
 
 	# Schedule the ever-important update function
 	pyglet.clock.schedule(update)
