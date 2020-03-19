@@ -33,13 +33,12 @@ def on_draw():
 
 # One time setup
 def setup():
+
+	# Background color and rendering optimizations
 	glClearColor(1, 1, 1, 1)
 	glColor3f(1, 0, 0)
 	glEnable(GL_DEPTH_TEST)
 	glEnable(GL_CULL_FACE)
-
-	# Wireframe view
-	#glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
 
 	# Simple light setup
 	glEnable(GL_LIGHTING)
@@ -47,59 +46,29 @@ def setup():
 	glEnable(GL_LIGHT1)
 
 
-# Create a torus
-def create_torus(radius, inner_radius, slices, inner_slices, batch, color=None):
-
-	# Create the vertex and normal arrays.
-	vertices = []
-	normals = []
-
-	u_step = 2 * np.pi / (slices - 1)
-	v_step = 2 * np.pi / (inner_slices - 1)
-	u = 0.
-	for i in range(slices):
-		cos_u = np.cos(u)
-		sin_u = np.sin(u)
-		v = 0.
-		for j in range(inner_slices):
-			cos_v = np.cos(v)
-			sin_v = np.sin(v)
-
-			d = (radius + inner_radius * cos_v)
-			x = d * cos_u
-			y = d * sin_u
-			z = inner_radius * sin_v
-
-			nx = cos_u * cos_v
-			ny = sin_u * cos_v
-			nz = sin_v
-
-			vertices.extend([x, y, z])
-			normals.extend([nx, ny, nz])
-			v += v_step
-		u += u_step
-
-	# Create a list of triangle indices.
-	indices = []
-	for i in range(slices - 1):
-		for j in range(inner_slices - 1):
-			p = i * inner_slices + j
-			indices.extend([p, p + inner_slices, p + inner_slices + 1])
-			indices.extend([p, p + inner_slices + 1, p + 1])
+# Create vertex list from vertices, normals, indices and all that good stuff
+def create_vertex_list(vertices, normals, indices, color, render_mode=GL_TRIANGLES, 
+						vertex_format="static", normal_format="static"):
 
 	# Select color
-	if color == 'purple':
-		diffuse = [0.5, 0.0, 0.3, 1.0]
-	elif color == 'red':
+	if color == 'red':
 		diffuse = [1.0, 0.0, 0.0, 1.0]
 	elif color == 'green':
 		diffuse = [0.0, 1.0, 0.0, 1.0]
 	elif color == 'blue':
 		diffuse = [0.0, 0.0, 1.0, 1.0]
+	elif color == 'yellow':
+		diffuse = [1.0, 1.0, 0.0, 1.0]
+	elif color == 'purple':
+		diffuse = [0.5, 0.0, 0.3, 1.0]
 	else:
 		diffuse = [0.0, 0.0, 0.0, 1.0]
+	
+	# Configure formats
+	vertex_format = "v3f/" + vertex_format
+	normal_format = "n3f/" + normal_format
 
-	# Create a Material and Group for the Model
+	# Create a material and group for the model
 	ambient = [0.5, 0.0, 0.3, 1.0]
 	specular = [1.0, 1.0, 1.0, 1.0]
 	emission = [0.0, 0.0, 0.0, 1.0]
@@ -107,14 +76,12 @@ def create_torus(radius, inner_radius, slices, inner_slices, batch, color=None):
 	material = pyglet.model.Material("", diffuse, ambient, specular, emission, shininess)
 	group = pyglet.model.MaterialGroup(material=material)
 
-	vertex_list = batch.add_indexed(len(vertices)//3,
-									GL_TRIANGLES,
-									group,
-									indices,
-									('v3f/dynamic', vertices),
-									('n3f/static', normals))
-
-	return vertex_list
+	return batch.add_indexed(len(vertices)//3,
+							render_mode,
+							group,
+							indices,
+							(vertex_format, vertices),
+							(normal_format, normals))
 
 
 # Create two floating triangles
@@ -147,24 +114,8 @@ def triangle_practice(batch):
 	indices.extend([3, 4, 5])
 	indices.extend([0, 2, 1])
 	indices.extend([3, 5, 4])
-
-	# Create a Material and Group for the Model
-	diffuse = [0.5, 0.0, 0.3, 1.0]
-	ambient = [0.5, 0.0, 0.3, 1.0]
-	specular = [1.0, 1.0, 1.0, 1.0]
-	emission = [0.0, 0.0, 0.0, 1.0]
-	shininess = 50
-	material = pyglet.model.Material("", diffuse, ambient, specular, emission, shininess)
-	group = pyglet.model.MaterialGroup(material=material)
-
-	vertex_list = batch.add_indexed(len(vertices)//3,
-									GL_TRIANGLES,
-									group,
-									indices,
-									('v3f/static', vertices),
-									('n3f/static', normals))
-
-	return vertex_list
+	
+	return create_vertex_list(vertices, normals, indices, "red", GL_TRIANGLES, "static", "static")
 
 
 # Create floating rectangles
@@ -253,23 +204,7 @@ def box_creator(size, center, batch):
 	for i in range(len(vertices)):
 		indices.append(i)
 
-	# Create a Material and Group for the Model
-	diffuse = [0.0, 0.4, 0.9, 1.0]
-	ambient = [0.5, 0.0, 0.3, 1.0]
-	specular = [1.0, 1.0, 1.0, 1.0]
-	emission = [0.0, 0.0, 0.0, 1.0]
-	shininess = 50
-	material = pyglet.model.Material("", diffuse, ambient, specular, emission, shininess)
-	group = pyglet.model.MaterialGroup(material=material)
-
-	vertex_list = batch.add_indexed(len(vertices)//3,
-									GL_QUADS,
-									group,
-									indices,
-									('v3f/static', vertices),
-									('n3f/static', normals))
-
-	return vertex_list
+	return create_vertex_list(vertices, normals, indices, "blue", GL_QUADS, "static", "static")
 
 
 # Create floating rectangles, but now dynamic and yellow
@@ -358,23 +293,7 @@ def ecb_creator(size, center, batch):
 	for i in range(len(vertices)):
 		indices.append(i)
 
-	# Create a Material and Group for the Model
-	diffuse = [1.0, 1.0, 0.0, 1.0]
-	ambient = [0.5, 0.0, 0.3, 1.0]
-	specular = [1.0, 1.0, 1.0, 1.0]
-	emission = [0.0, 0.0, 0.0, 1.0]
-	shininess = 50
-	material = pyglet.model.Material("", diffuse, ambient, specular, emission, shininess)
-	group = pyglet.model.MaterialGroup(material=material)
-
-	vertex_list = batch.add_indexed(len(vertices)//3,
-									GL_QUADS,
-									group,
-									indices,
-									('v3f/dynamic', vertices),
-									('n3f/static', normals))
-
-	return vertex_list
+	return create_vertex_list(vertices, normals, indices, "yellow", GL_QUADS, "dynamic", "static")
 
 
 # Create a set of vertex lists for battlefield stage
@@ -416,8 +335,8 @@ class CharacterModel:
 		self.vertices = np.reshape(self.vertices, (-1, 3))
 
 		# Define classical mechanics
-		self.force = 50.0
-		self.friction = 20.0
+		self.force = 200.0
+		self.friction = 45.0
 		self.max_speed = 10.0
 		self.velocity = np.zeros(3)
 		
@@ -435,7 +354,8 @@ class CharacterModel:
 	
 	# Determine ecb dimensions from the vertices
 	def __compute_ecb_dims(self):
-		self.ecb_dims = (np.max(self.vertices, axis=0) - np.min(self.vertices, axis=0)) * 2 / 3
+		self.ecb_dims = np.max(self.vertices, axis=0) - np.min(self.vertices, axis=0)
+		self.ecb_dims *= 2 / 3
 	
 	# Destructor
 	def __delete__(self):
@@ -549,10 +469,8 @@ def translate_camera_y(dt, rate):
 @window.event
 def on_key_press(symbol, modifiers):
 
-	# Delete the torus
+	# Enable wireframe view
 	if symbol == key.SPACE:
-		
-		# Wireframe view
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
 
 	# Translate the camera
