@@ -167,7 +167,7 @@ def triangle_practice(batch):
 	return vertex_list
 
 
-# Create floating rectanles
+# Create floating rectangles
 def box_creator(size, center, batch):
 	
 	# Convert to array objects
@@ -272,6 +272,111 @@ def box_creator(size, center, batch):
 	return vertex_list
 
 
+# Create floating rectangles, but now dynamic and yellow
+def ecb_creator(size, center, batch):
+	
+	# Convert to array objects
+	size = np.asarray(size)
+	center = np.asarray(center)
+	
+	# Error check
+	if np.any(size <= 0):
+		raise ValueError("Size values must be strictly positive")
+	if size.shape != (3,):
+		raise ValueError("Size must be a 1D array, 3 in length")
+	if center.shape != (3,):
+		raise ValueError("Center must be a 1D array, 3 in length")
+	
+	# Offset parameter
+	offset = center - size / 2
+	
+	# Create the vertex and normal arrays
+	vertices = []
+	normals = []
+	
+	# Have some standard normals
+	x_normal = np.array([0.98, 0.1, 0.1])
+	y_normal = np.array([0.1, 0.98, 0.1])
+	z_normal = np.array([0.1, 0.1, 0.98])
+	
+	# Front face
+	vertices.extend(np.array([0, 0, 1] * size + offset))
+	vertices.extend(np.array([1, 0, 1] * size + offset))
+	vertices.extend(np.array([1, 1, 1] * size + offset))
+	vertices.extend(np.array([0, 1, 1] * size + offset))
+	
+	for i in range(4):
+		normals.extend(z_normal)
+	
+	# Back face
+	vertices.extend(np.array([0, 0, 0] * size + offset))
+	vertices.extend(np.array([0, 1, 0] * size + offset))
+	vertices.extend(np.array([1, 1, 0] * size + offset))
+	vertices.extend(np.array([1, 0, 0] * size + offset))
+	
+	for i in range(4):
+		normals.extend(-z_normal)
+	
+	# Top face
+	vertices.extend(np.array([0, 1, 0] * size + offset))
+	vertices.extend(np.array([0, 1, 1] * size + offset))
+	vertices.extend(np.array([1, 1, 1] * size + offset))
+	vertices.extend(np.array([1, 1, 0] * size + offset))
+	
+	for i in range(4):
+		normals.extend(y_normal)
+	
+	# Bot face
+	vertices.extend(np.array([0, 0, 0] * size + offset))
+	vertices.extend(np.array([1, 0, 0] * size + offset))
+	vertices.extend(np.array([1, 0, 1] * size + offset))
+	vertices.extend(np.array([0, 0, 1] * size + offset))
+	
+	for i in range(4):
+		normals.extend(-y_normal)
+	
+	# Right face
+	vertices.extend(np.array([1, 0, 0] * size + offset))
+	vertices.extend(np.array([1, 1, 0] * size + offset))
+	vertices.extend(np.array([1, 1, 1] * size + offset))
+	vertices.extend(np.array([1, 0, 1] * size + offset))
+	
+	for i in range(4):
+		normals.extend(x_normal)
+	
+	# Left face
+	vertices.extend(np.array([0, 0, 0] * size + offset))
+	vertices.extend(np.array([0, 0, 1] * size + offset))
+	vertices.extend(np.array([0, 1, 1] * size + offset))
+	vertices.extend(np.array([0, 1, 0] * size + offset))
+	
+	for i in range(4):
+		normals.extend(-x_normal)
+		
+	# Do the indices too
+	indices = []
+	for i in range(len(vertices)):
+		indices.append(i)
+
+	# Create a Material and Group for the Model
+	diffuse = [1.0, 1.0, 0.0, 1.0]
+	ambient = [0.5, 0.0, 0.3, 1.0]
+	specular = [1.0, 1.0, 1.0, 1.0]
+	emission = [0.0, 0.0, 0.0, 1.0]
+	shininess = 50
+	material = pyglet.model.Material("", diffuse, ambient, specular, emission, shininess)
+	group = pyglet.model.MaterialGroup(material=material)
+
+	vertex_list = batch.add_indexed(len(vertices)//3,
+									GL_QUADS,
+									group,
+									indices,
+									('v3f/dynamic', vertices),
+									('n3f/static', normals))
+
+	return vertex_list
+
+
 # Create a set of vertex lists for battlefield stage
 def battlefield_creator(batch):
 	
@@ -299,17 +404,16 @@ def battlefield_creator(batch):
 class CharacterModel:
 
 	# Constructor
-	def __init__(self, vertex_list, keys, center=None):
+	def __init__(self, vertex_list, keys, center=None, ecb_dims=None):
 		
 		# Store as instance attributes
 		self.vertex_list = vertex_list
 		self.keys = keys
 
 		# Extract a deepcopy of vertices formatted as Nx3 array
-		num_vertices = self.vertex_list.vertices.size // 3
 		self.vertices = []
 		self.vertices.extend(self.vertex_list.vertices)
-		self.vertices = np.reshape(self.vertices, (num_vertices, 3))
+		self.vertices = np.reshape(self.vertices, (-1, 3))
 
 		# Define classical mechanics
 		self.force = 50.0
@@ -322,13 +426,22 @@ class CharacterModel:
 			self.center = center
 		else:
 			self.center = np.mean(self.vertices, axis=0)
-	
+		
+		# Determine the environment collision box
+		if ecb_dims is not None:
+			self.ecb_dims = ecb_dims
+		else:
+			self.ecb_dims = (np.max(self.vertices, axis=0) - np.min(self.vertices, axis=0)) / 2
+		
+		self.ecb_on = False
+		
 	# Destructor
 	def __delete__(self):
 		vertex_list.delete()
 
-	# Scale both the real, local vertices
+	# Scale both the real, local vertices, and the ecb dimensions
 	def __scale_vertices(self, scaling):
+		self.ecb_dims *= scaling
 		self.vertices *= scaling
 		self.vertex_list.vertices = np.copy(np.ravel(self.vertices))
 	
@@ -342,6 +455,19 @@ class CharacterModel:
 		self.center += translation
 		self.vertices += translation
 		self.vertex_list.vertices = np.copy(np.ravel(self.vertices))
+	
+	# For debugging, show the ECB of the object
+	def show_ecb(self):
+		
+		# Turn the ecb on
+		self.ecb_on = True
+		
+		# Recompute the ecbs
+		self.ecb_dims = (np.max(self.vertices, axis=0) - np.min(self.vertices, axis=0)) / 2
+		
+		# Construct the ecb
+		vertex_list = ecb_creator(self.ecb_dims, self.center, batch)
+		self.ecb = CharacterModel(vertex_list, self.keys)
 
 	# Rescale total object size about center
 	def rescale(self, new_size):
@@ -540,10 +666,12 @@ if __name__ == "__main__":
 	fox_model.rescale(2)
 	fox_model.set_position([-5, 1.2, 0])
 	fox_model.rotate_degrees('y', 90)
+	fox_model.show_ecb()
 
 	# Keep track of all the active models
 	object_list = []
 	object_list.append(fox_model)
+	object_list.append(fox_model.ecb)
 
 	# Run the animation!
 	pyglet.app.run()
