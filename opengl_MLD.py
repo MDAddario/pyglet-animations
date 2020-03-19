@@ -232,13 +232,12 @@ def battlefield_creator(batch, color="blue"):
 	# Dead dictionary
 	dead = {key.W: False, key.A: False, key.S: False, key.D: False}
 	
-	# Compute ECBs for each box
-	ecb_list = []
+	# Compute CharacterModel object for each box
+	model_list = []
 	for vertex_list in vertex_lists:
-		ecb_list.append(CharacterModel(batch, vertex_list, dead))
-		ecb_list[-1].show_ecb()
+		model_list.append(CharacterModel(batch, vertex_list, dead))
 	
-	return vertex_lists, ecb_list
+	return model_list
 
 
 # Class to keep track of model and associated attributes
@@ -278,7 +277,7 @@ class CharacterModel:
 	# Determine ecb dimensions from the vertices
 	def __compute_ecb_dims(self):
 		self.ecb_dims = np.max(self.vertices, axis=0) - np.min(self.vertices, axis=0)
-		#self.ecb_dims *= 2 / 3
+		self.ecb_dims /= 2
 	
 	# Destructor
 	def __delete__(self):
@@ -305,7 +304,7 @@ class CharacterModel:
 	
 	# For debugging, show the ECB of the object
 	def show_ecb(self):
-		vertex_list = box_creator(self.batch, self.ecb_dims, self.center, 
+		vertex_list = box_creator(self.batch, 2 * self.ecb_dims, self.center, 
 									"yellow", "dynamic", "static")
 		self.ecb = CharacterModel(self.batch, vertex_list, self.keys)
 
@@ -372,14 +371,6 @@ class CharacterModel:
 		# Move player for non-zero velocity
 		if not np.allclose(self.velocity, 0):
 			self.__translate_vertices(dt * self.velocity)
-
-
-# Update every frame
-def update(dt):
-	for obj in object_list:
-		obj.update(dt)
-	for ecb in ecb_list:
-		ecb.update(dt)
 
 
 # Take care of camera movement
@@ -469,6 +460,22 @@ def on_mouse_scroll(x, y, scroll_x, scroll_y):
 	dz = min(dz, 0)
 
 
+# Update every frame
+def update(dt):
+	
+	# Update all mobile objects
+	for obj in object_list:
+		obj.update(dt)
+	
+	# Clip detection
+	for stage_model in stage_model_list:
+		
+		separation = np.abs(stage_model.center[0:2] - fox_model.center[0:2]) \
+						- (stage_model.ecb_dims[0:2] + fox_model.ecb_dims[0:2])
+		
+		# Check for negative separations
+		fox_model.velocity[0:2] = np.where(separation < 0, 0, fox_model.velocity[0:2])
+
 if __name__ == "__main__":
 
 	# Setup window and batch
@@ -483,7 +490,7 @@ if __name__ == "__main__":
 
 	# Generate sample polygons
 	tri_vertex_list = triangle_practice(batch)
-	stage_vertex_lists, stage_ecb_list = battlefield_creator(batch)
+	stage_model_list = battlefield_creator(batch)
 
 	# Schedule the ever-important update function
 	pyglet.clock.schedule(update)
@@ -505,14 +512,15 @@ if __name__ == "__main__":
 	fox_model.set_position([-5, 1.2, 0])
 	fox_model.rotate_degrees('y', 90)
 	fox_model.show_ecb()
+	
+	# Configure I.C.s for stage model
+	for stage_model in stage_model_list:
+		stage_model.show_ecb()
 
 	# Keep track of all the active models
 	object_list = []
 	object_list.append(fox_model)
-	
-	ecb_list = []
-	ecb_list.append(fox_model.ecb)
-	ecb_list.extend(stage_ecb_list)
+	object_list.append(fox_model.ecb)
 
 	# Run the animation!
 	pyglet.app.run()
