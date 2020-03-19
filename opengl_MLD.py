@@ -47,7 +47,7 @@ def setup():
 
 
 # Create vertex list from vertices, normals, indices and all that good stuff
-def create_vertex_list(vertices, normals, indices, color, render_mode=GL_TRIANGLES, 
+def create_vertex_list(batch, vertices, normals, indices, color, render_mode=GL_TRIANGLES, 
 						vertex_format="static", normal_format="static"):
 
 	# Select color
@@ -89,7 +89,7 @@ def triangle_practice(batch):
 
 	size = 1.5
 
-	# Create the vertex and normal arrays.
+	# Create the vertex and normal arrays
 	vertices = []
 	normals = []
 	
@@ -108,18 +108,19 @@ def triangle_practice(batch):
 	for i in range(6):
 		normals.extend(z_normal)
 	
-	# Create a list of triangle indices.
+	# Create a list of triangle indices
 	indices = []
 	indices.extend([0, 1, 2])
 	indices.extend([3, 4, 5])
 	indices.extend([0, 2, 1])
 	indices.extend([3, 5, 4])
 	
-	return create_vertex_list(vertices, normals, indices, "red", GL_TRIANGLES, "static", "static")
+	return create_vertex_list(batch, vertices, normals, indices, "red", 
+								GL_TRIANGLES, "static", "static")
 
 
 # Create floating rectangles
-def box_creator(size, center, batch):
+def box_creator(batch, size, center, color, vertex_format, normal_format):
 	
 	# Convert to array objects
 	size = np.asarray(size)
@@ -198,106 +199,18 @@ def box_creator(size, center, batch):
 	
 	for i in range(4):
 		normals.extend(-x_normal)
-		
+	
 	# Do the indices too
 	indices = []
 	for i in range(len(vertices)):
 		indices.append(i)
 
-	return create_vertex_list(vertices, normals, indices, "blue", GL_QUADS, "static", "static")
-
-
-# Create floating rectangles, but now dynamic and yellow
-def ecb_creator(size, center, batch):
-	
-	# Convert to array objects
-	size = np.asarray(size)
-	center = np.asarray(center)
-	
-	# Error check
-	if np.any(size <= 0):
-		raise ValueError("Size values must be strictly positive")
-	if size.shape != (3,):
-		raise ValueError("Size must be a 1D array, 3 in length")
-	if center.shape != (3,):
-		raise ValueError("Center must be a 1D array, 3 in length")
-	
-	# Offset parameter
-	offset = center - size / 2
-	
-	# Create the vertex and normal arrays
-	vertices = []
-	normals = []
-	
-	# Have some standard normals
-	x_normal = np.array([0.98, 0.1, 0.1])
-	y_normal = np.array([0.1, 0.98, 0.1])
-	z_normal = np.array([0.1, 0.1, 0.98])
-	
-	# Front face
-	vertices.extend(np.array([0, 0, 1] * size + offset))
-	vertices.extend(np.array([1, 0, 1] * size + offset))
-	vertices.extend(np.array([1, 1, 1] * size + offset))
-	vertices.extend(np.array([0, 1, 1] * size + offset))
-	
-	for i in range(4):
-		normals.extend(z_normal)
-	
-	# Back face
-	vertices.extend(np.array([0, 0, 0] * size + offset))
-	vertices.extend(np.array([0, 1, 0] * size + offset))
-	vertices.extend(np.array([1, 1, 0] * size + offset))
-	vertices.extend(np.array([1, 0, 0] * size + offset))
-	
-	for i in range(4):
-		normals.extend(-z_normal)
-	
-	# Top face
-	vertices.extend(np.array([0, 1, 0] * size + offset))
-	vertices.extend(np.array([0, 1, 1] * size + offset))
-	vertices.extend(np.array([1, 1, 1] * size + offset))
-	vertices.extend(np.array([1, 1, 0] * size + offset))
-	
-	for i in range(4):
-		normals.extend(y_normal)
-	
-	# Bot face
-	vertices.extend(np.array([0, 0, 0] * size + offset))
-	vertices.extend(np.array([1, 0, 0] * size + offset))
-	vertices.extend(np.array([1, 0, 1] * size + offset))
-	vertices.extend(np.array([0, 0, 1] * size + offset))
-	
-	for i in range(4):
-		normals.extend(-y_normal)
-	
-	# Right face
-	vertices.extend(np.array([1, 0, 0] * size + offset))
-	vertices.extend(np.array([1, 1, 0] * size + offset))
-	vertices.extend(np.array([1, 1, 1] * size + offset))
-	vertices.extend(np.array([1, 0, 1] * size + offset))
-	
-	for i in range(4):
-		normals.extend(x_normal)
-	
-	# Left face
-	vertices.extend(np.array([0, 0, 0] * size + offset))
-	vertices.extend(np.array([0, 0, 1] * size + offset))
-	vertices.extend(np.array([0, 1, 1] * size + offset))
-	vertices.extend(np.array([0, 1, 0] * size + offset))
-	
-	for i in range(4):
-		normals.extend(-x_normal)
-		
-	# Do the indices too
-	indices = []
-	for i in range(len(vertices)):
-		indices.append(i)
-
-	return create_vertex_list(vertices, normals, indices, "yellow", GL_QUADS, "dynamic", "static")
+	return create_vertex_list(batch, vertices, normals, indices, color, 
+								GL_QUADS, vertex_format, normal_format)
 
 
 # Create a set of vertex lists for battlefield stage
-def battlefield_creator(batch):
+def battlefield_creator(batch, color="blue"):
 	
 	# Keep track of all platforms
 	vertex_lists = []
@@ -311,10 +224,10 @@ def battlefield_creator(batch):
 	top_center   = [ 0.0, 5.0, 0.0]
 	
 	# Create all platforms
-	vertex_lists.append(box_creator(base_size, base_center,  batch))
-	vertex_lists.append(box_creator(plat_size, left_center,  batch))
-	vertex_lists.append(box_creator(plat_size, right_center, batch))
-	vertex_lists.append(box_creator(plat_size, top_center,   batch))
+	vertex_lists.append(box_creator(batch, base_size, base_center,  color, "static", "static"))
+	vertex_lists.append(box_creator(batch, plat_size, left_center,  color, "static", "static"))
+	vertex_lists.append(box_creator(batch, plat_size, right_center, color, "static", "static"))
+	vertex_lists.append(box_creator(batch, plat_size, top_center,   color, "static", "static"))
 	
 	return vertex_lists
 
@@ -323,9 +236,10 @@ def battlefield_creator(batch):
 class CharacterModel:
 
 	# Constructor
-	def __init__(self, vertex_list, keys, center=None, ecb_dims=None):
+	def __init__(self, batch, vertex_list, keys, center=None, ecb_dims=None):
 		
 		# Store as instance attributes
+		self.batch = batch
 		self.vertex_list = vertex_list
 		self.keys = keys
 
@@ -381,8 +295,9 @@ class CharacterModel:
 	
 	# For debugging, show the ECB of the object
 	def show_ecb(self):
-		vertex_list = ecb_creator(self.ecb_dims, self.center, batch)
-		self.ecb = CharacterModel(vertex_list, self.keys)
+		vertex_list = box_creator(self.batch, self.ecb_dims, self.center, 
+									"yellow", "dynamic", "static")
+		self.ecb = CharacterModel(self.batch, vertex_list, self.keys)
 
 	# Rescale total object size about center
 	def rescale(self, new_size):
@@ -557,7 +472,7 @@ if __name__ == "__main__":
 	dz = -15
 
 	# Generate sample polygons
-	triangle_model = triangle_practice(batch=batch)
+	triangle_model = triangle_practice(batch)
 	battlefield_lists = battlefield_creator(batch)
 
 	# Schedule the ever-important update function
@@ -573,7 +488,7 @@ if __name__ == "__main__":
 	# Load 3D fox model
 	os.chdir('fox/')
 	fox = pyglet.model.load("low-poly-fox-by-pixelmannen.obj", batch=batch)
-	fox_model = CharacterModel(fox.vertex_lists[0], keys)
+	fox_model = CharacterModel(batch, fox.vertex_lists[0], keys)
 
 	# Configure initial conditions for fox model
 	fox_model.rescale(2)
