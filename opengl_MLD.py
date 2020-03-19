@@ -229,7 +229,15 @@ def battlefield_creator(batch, color="blue"):
 	vertex_lists.append(box_creator(batch, plat_size, right_center, color, "static", "static"))
 	vertex_lists.append(box_creator(batch, plat_size, top_center,   color, "static", "static"))
 	
-	return vertex_lists
+	# Dead dictionary
+	dead = {key.W: False, key.A: False, key.S: False, key.D: False}
+	
+	# Compute ECBs for each box
+	ecb_list = []
+	for vertex_list in vertex_lists:
+		ecb_list.append(CharacterModel(batch, vertex_list, dead))
+	
+	return vertex_lists, ecb_list
 
 
 # Class to keep track of model and associated attributes
@@ -269,11 +277,12 @@ class CharacterModel:
 	# Determine ecb dimensions from the vertices
 	def __compute_ecb_dims(self):
 		self.ecb_dims = np.max(self.vertices, axis=0) - np.min(self.vertices, axis=0)
-		self.ecb_dims *= 2 / 3
+		self.ecb_dims *= 3 / 2
 	
 	# Destructor
 	def __delete__(self):
 		vertex_list.delete()
+		del self.ecb
 
 	# Scale both the real, local vertices, and the ecb dimensions
 	def __scale_vertices(self, scaling):
@@ -366,8 +375,10 @@ class CharacterModel:
 
 # Update every frame
 def update(dt):
-	for object in object_list:
-		object.update(dt)
+	for obj in object_list:
+		obj.update(dt)
+	for ecb in ecb_list:
+		ecb.update(dt)
 
 
 # Take care of camera movement
@@ -439,12 +450,10 @@ def on_mouse_drag(x, y, dx, dy, buttons, modifiers):
 	if buttons & mouse.LEFT:
 
 		if modifiers & key.MOD_SHIFT:
-
 			rz += dy
 			rz %= 360
 
 		else:
-
 			rx += -dy
 			ry += dx
 			rx %= 360
@@ -472,8 +481,12 @@ if __name__ == "__main__":
 	dz = -15
 
 	# Generate sample polygons
-	triangle_model = triangle_practice(batch)
-	battlefield_lists = battlefield_creator(batch)
+	tri_vertex_list = triangle_practice(batch)
+	stage_vertex_lists, stage_ecb_list = battlefield_creator(batch)
+	
+	# DO IT FOR THE QUEEN
+	for stage_vertex_list in stage_vertex_lists:
+		stage_vertex_list.delete()
 
 	# Schedule the ever-important update function
 	pyglet.clock.schedule(update)
@@ -499,7 +512,10 @@ if __name__ == "__main__":
 	# Keep track of all the active models
 	object_list = []
 	object_list.append(fox_model)
-	object_list.append(fox_model.ecb)
+	
+	ecb_list = []
+	ecb_list.append(fox_model.ecb)
+	ecb_list.extend(stage_ecb_list)
 
 	# Run the animation!
 	pyglet.app.run()
