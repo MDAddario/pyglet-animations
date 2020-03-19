@@ -339,11 +339,6 @@ class CharacterModel:
 		self.vertices += translation
 		self.vertex_list.vertices = np.copy(np.ravel(self.vertices))
 
-	# Update model position while velocity is non-zero
-	def update(self, dt):
-		if not np.allclose(self.velocity, 0):
-			self.__translate_vertices(dt * self.velocity)
-
 	# Rescale total object size about center
 	def rescale(self, new_size):
 
@@ -351,36 +346,40 @@ class CharacterModel:
 		distances = np.sqrt(np.sum(np.square(self.vertices - self.center), axis=1))
 		max_dist = np.max(distances)
 		scaling = new_size / max_dist
-		
+
 		# Keep track of old center position
 		old_center = np.copy(self.center)
-		
+
 		# Slide to origin, rescale, slide back
 		self.__translate_vertices(-old_center)
 		self.__scale_vertices(scaling)
 		self.__translate_vertices(old_center)
-	
+
 	# Rotate object about center
 	def rotate_degrees(self, axis, angle):
-		
+
 		# Check axis makes sense
 		if axis not in "xyz":
 			raise ValueError("Rotation axis must be 'x', 'y', or 'z'.")
-		
+
 		# Build rotation object
 		r = R.from_euler(axis, angle, degrees=True)
-		
+
 		# Keep track of old center position
 		old_center = np.copy(self.center)
-		
+
 		# Slide to origin, rescale, slide back
 		self.__translate_vertices(-old_center)
 		self.__rotate_vertices(r)
 		self.__translate_vertices(old_center)
 
+	# Update model position while velocity is non-zero
+	def update(self, dt):
+		if not np.allclose(self.velocity, 0):
+			self.__translate_vertices(dt * self.velocity)
+
 	# Set velocity values
 	def set_velocity(self, xi, sign):
-		
 		self.velocity[xi] = self.max_speed * sign
 
 	# Set the position of the model
@@ -396,10 +395,6 @@ batch = pyglet.graphics.Batch()
 rx = ry = rz = 0
 dx = dy = 0
 dz = -8
-
-# Generate sample toruses
-torus_model = create_torus(radius=0.6, inner_radius=0.2, slices=50, 
-						   inner_slices=30, batch=batch, color='red')
 
 # Generate sample polygons
 triangle_model = triangle_practice(batch=batch)
@@ -434,11 +429,9 @@ def on_key_press(symbol, modifiers):
 
 	# Delete the torus
 	if symbol == key.SPACE:
-
-		try:
-			torus_model.delete()
-		except:
-			pass
+		
+		# Wireframe view
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
 
 	# Translate the camera
 	elif symbol == key.UP:
