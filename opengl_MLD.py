@@ -328,8 +328,8 @@ class CharacterModel:
 		self.vertex_list.vertices = np.copy(np.ravel(self.vertices))
 	
 	# Rotate both the real, local vertices
-	def __rotate_vertices(self, matrix):
-		self.vertices = self.vertices @ matrix.T	# (matrix @ vertices.T).T
+	def __rotate_vertices(self, rotation):
+		self.vertices = rotation.apply(self.vertices)
 		self.vertex_list.vertices = np.copy(np.ravel(self.vertices))
 
 	# Translate both the real, local vertices, and the transformation center
@@ -374,7 +374,7 @@ class CharacterModel:
 		
 		# Slide to origin, rescale, slide back
 		self.__translate_vertices(-old_center)
-		self.__rotate_vertices(r.as_matrix())
+		self.__rotate_vertices(r)
 		self.__translate_vertices(old_center)
 
 	# Set velocity values
@@ -557,7 +557,7 @@ fox_model = CharacterModel(fox.vertex_lists[0])
 
 # Configure initial conditions for fox model
 fox_model.rescale(2)
-fox_model.set_position([0, 0, 0])
+fox_model.set_position([-5, 1.2, 0])
 fox_model.rotate_degrees('y', 90)
 
 # Add keystate handler (breaks if you put this sooner in the code)
