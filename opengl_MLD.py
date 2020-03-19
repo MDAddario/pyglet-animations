@@ -296,7 +296,9 @@ def battlefield_creator(batch):
 class CustomModel:
 
 	# Constructor
-	def __init__(self, vertex_list):
+	def __init__(self, vertex_list, center=None):
+		
+		# Store as instance attribute
 		self.vertex_list = vertex_list
 
 		# Extract a deepcopy of vertices formatted as Nx3 array
@@ -308,53 +310,64 @@ class CustomModel:
 		# Define classical mechanics
 		self.velocity = np.zeros(3)
 		self.max_speed = 10.0
+		
+		# Include the center of all coordinate transforms
+		if center is not None:
+			self.center = center
+		else:
+			self.center = self.__determine_center()
+	
+	# Determine the center
+	def __determine_center(self):
+		pass
 
 	# Destructor
 	def __delete__(self):
 		vertex_list.delete()
 
-	# Edit both the real copy and self copy of vertices
-	def __scale_vertices(self, scale_x, scale_y, scale_z):
-		self.vertices[:,0] *= scale_x
-		self.vertices[:,1] *= scale_y
-		self.vertices[:,2] *= scale_z
+	# Scale both the real, local vertices, and the transformation center
+	def __scale_vertices(self, scaling):
+		self.center *= scaling
+		self.vertices *= scaling
 		self.vertex_list.vertices = np.copy(np.ravel(self.vertices))
 
-	# Edit both the real copy and self copy of vertices
-	def __translate_vertices(self, trans_x, trans_y, trans_z):
-		self.vertices[:,0] += trans_x
-		self.vertices[:,1] += trans_y
-		self.vertices[:,2] += trans_z
+	# Translate both the real, local vertices, and the transformation center
+	def __translate_vertices(self, translation):
+		self.center += translation
+		self.vertices += translation
 		self.vertex_list.vertices = np.copy(np.ravel(self.vertices))
 
 	# Update model position while velocity is non-zero
 	def update(self, dt):
 		if not np.allclose(self.velocity, 0):
-			self.__translate_vertices(*(dt * self.velocity))
+			self.__translate_vertices(dt * self.velocity)
 
 	# Rescale total object size
 	def rescale(self, new_size):
 
-		# Make sure that all coordinates are non-negative
-		temp_vertices = np.copy(self.vertices)
-		for xi in range(3):
-			temp_vertices[:,xi] -= np.min(temp_vertices[:,xi])
-
-		# Determine maximal distance from origin 
-		distances = np.sqrt(np.sum(np.square(temp_vertices), axis=1))
+		# Determine maximal distance of vertices from center
+		distances = np.sqrt(np.sum(np.square(self.vertices - self.center), axis=1))
 		max_dist = np.max(distances)
-
-		# Compute scaling factor and resize
 		scaling = new_size / max_dist
-		self.__scale_vertices(scaling, scaling, scaling)
+		
+		# Keep track of old center position
+		old_center = np.copy(self.center)
+		
+		# Slide to origin, rescale, slide back
+		self.__translate_vertices(-old_center)
+		self.__scale_vertices(scaling)
+		self.__translate_vertices(old_center)
 
 	# Set velocity values
 	def set_velocity(self, xi, sign):
-		self.velocity[xi] = self.max_speed * sign
+		if sign > 0:
+			self.velocity[xi] = self.max_speed
+		else:
+			self.velocity[xi] = -self.max_speed
 
 	# Translate model by given input
-	def translate(self, dx, dy, dz):
-		self.__translate_vertices(dx, dy, dz)
+	def translate(self, translation):
+		self.__translate_vertices(translation)
 
 
 # Setup window and batch
