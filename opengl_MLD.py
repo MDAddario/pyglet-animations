@@ -38,7 +38,7 @@ def setup():
 	glEnable(GL_CULL_FACE)
 
 	# Wireframe view
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
+	#glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
 
 	# Simple light setup
 	glEnable(GL_LIGHTING)
@@ -271,6 +271,7 @@ def box_creator(size, center, batch):
 	return vertex_list
 
 
+# Create a set of vertex lists for battlefield stage
 def battlefield_creator(batch):
 	
 	# Keep track of all platforms
@@ -379,10 +380,8 @@ class CharacterModel:
 
 	# Set velocity values
 	def set_velocity(self, xi, sign):
-		if sign > 0:
-			self.velocity[xi] = self.max_speed
-		else:
-			self.velocity[xi] = -self.max_speed
+		
+		self.velocity[xi] = self.max_speed * sign
 
 	# Set the position of the model
 	def set_position(self, position):
