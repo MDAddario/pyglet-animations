@@ -312,7 +312,8 @@ class CharacterModel:
 
 		# Define classical mechanics
 		self.force = 50.0
-		self.max_speed = 50.0
+		self.friction = 20.0
+		self.max_speed = 10.0
 		self.velocity = np.zeros(3)
 		
 		# Include the center of all coordinate transforms
@@ -391,6 +392,12 @@ class CharacterModel:
 			self.velocity[0] += self.force * dt
 		if self.keys[key.A]:
 			self.velocity[0] -= self.force * dt
+		
+		# Account for friction
+		self.velocity -= np.sign(self.velocity) * self.friction * dt
+		
+		# Zero snap for friction
+		self.velocity = np.where(np.abs(self.velocity) - self.friction * dt < 0, 0, self.velocity)
 		
 		# Force maximum velocity
 		np.clip(self.velocity, -self.max_speed, self.max_speed, out=self.velocity)
