@@ -431,41 +431,36 @@ class CharacterModel:
 		if ecb_dims is not None:
 			self.ecb_dims = ecb_dims
 		else:
-			self.ecb_dims = (np.max(self.vertices, axis=0) - np.min(self.vertices, axis=0)) / 2
-		
-		self.ecb_on = False
-		
+			self.__compute_ecb_dims()
+	
+	# Determine ecb dimensions from the vertices
+	def __compute_ecb_dims(self):
+		self.ecb_dims = (np.max(self.vertices, axis=0) - np.min(self.vertices, axis=0)) * 2 / 3
+	
 	# Destructor
 	def __delete__(self):
 		vertex_list.delete()
 
 	# Scale both the real, local vertices, and the ecb dimensions
 	def __scale_vertices(self, scaling):
-		self.ecb_dims *= scaling
 		self.vertices *= scaling
 		self.vertex_list.vertices = np.copy(np.ravel(self.vertices))
+		self.ecb_dims *= scaling
 	
-	# Rotate both the real, local vertices
+	# Rotate both the real, local vertices, and the ecb dimensions
 	def __rotate_vertices(self, rotation):
 		self.vertices = rotation.apply(self.vertices)
 		self.vertex_list.vertices = np.copy(np.ravel(self.vertices))
+		self.__compute_ecb_dims()
 
 	# Translate both the real, local vertices, and the transformation center
 	def __translate_vertices(self, translation):
-		self.center += translation
 		self.vertices += translation
 		self.vertex_list.vertices = np.copy(np.ravel(self.vertices))
+		self.center += translation
 	
 	# For debugging, show the ECB of the object
 	def show_ecb(self):
-		
-		# Turn the ecb on
-		self.ecb_on = True
-		
-		# Recompute the ecbs
-		self.ecb_dims = (np.max(self.vertices, axis=0) - np.min(self.vertices, axis=0)) / 2
-		
-		# Construct the ecb
 		vertex_list = ecb_creator(self.ecb_dims, self.center, batch)
 		self.ecb = CharacterModel(vertex_list, self.keys)
 
