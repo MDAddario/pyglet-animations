@@ -6,6 +6,7 @@ import numpy as np
 from scipy.spatial.transform import Rotation as R
 import os
 
+# Setup window
 try:
 	# Try and create a window with multisampling (antialiasing)
 	config = Config(sample_buffers=1, samples=4, depth_size=16, double_buffer=True)
@@ -379,10 +380,10 @@ class CharacterModel:
 	# Set the position of the model
 	def set_position(self, position):
 		self.__translate_vertices(position - self.center)
-	
+
 	# Update model position based off keyboard input
 	def update(self, dt):
-		
+
 		# Drive the system by user input
 		if self.keys[key.W]:
 			self.velocity[1] += self.force * dt
@@ -406,30 +407,11 @@ class CharacterModel:
 		if not np.allclose(self.velocity, 0):
 			self.__translate_vertices(dt * self.velocity)
 
-# Setup window and batch
-setup()
-batch = pyglet.graphics.Batch()
-
-# Initialize global variables
-rx = ry = rz = 0
-dx = dy = 0
-dz = -8
-
-# Generate sample polygons
-triangle_model = triangle_practice(batch=batch)
-battlefield_lists = battlefield_creator(batch)
-
 
 # Update every frame
 def update(dt):
-	fox_model.update(dt)
-
-
-# Schedule the ever-important update function
-pyglet.clock.schedule(update)
-
-# Translation speeds
-cam_rate = 0.7
+	for object in object_list:
+		object.update(dt)
 
 
 # Take care of camera movement
@@ -522,19 +504,46 @@ def on_mouse_scroll(x, y, scroll_x, scroll_y):
 	dz -= scroll_y * dz * 0.25
 	dz = min(dz, 0)
 
-# Add keystate handler (breaks if you put this sooner in the code)
-keys = key.KeyStateHandler()
-window.push_handlers(keys)
 
-# Load 3D fox model
-os.chdir('fox/')
-fox = pyglet.model.load("low-poly-fox-by-pixelmannen.obj", batch=batch)
-fox_model = CharacterModel(fox.vertex_lists[0], keys)
+if __name__ == "__main__":
 
-# Configure initial conditions for fox model
-fox_model.rescale(2)
-fox_model.set_position([-5, 1.2, 0])
-fox_model.rotate_degrees('y', 90)
+	# Setup window and batch
+	setup()
+	batch = pyglet.graphics.Batch()
 
-# Run the animation!
-pyglet.app.run()
+	# Initialize global variables
+	rx = ry = rz = 0
+	dx = 0
+	dy = -2
+	dz = -15
+
+	# Generate sample polygons
+	triangle_model = triangle_practice(batch=batch)
+	battlefield_lists = battlefield_creator(batch)
+
+	# Schedule the ever-important update function
+	pyglet.clock.schedule(update)
+
+	# Translation speeds
+	cam_rate = 0.7
+
+	# Add keystate handler (breaks if you put this sooner in the code)
+	keys = key.KeyStateHandler()
+	window.push_handlers(keys)
+
+	# Load 3D fox model
+	os.chdir('fox/')
+	fox = pyglet.model.load("low-poly-fox-by-pixelmannen.obj", batch=batch)
+	fox_model = CharacterModel(fox.vertex_lists[0], keys)
+
+	# Configure initial conditions for fox model
+	fox_model.rescale(2)
+	fox_model.set_position([-5, 1.2, 0])
+	fox_model.rotate_degrees('y', 90)
+
+	# Keep track of all the active models
+	object_list = []
+	object_list.append(fox_model)
+
+	# Run the animation!
+	pyglet.app.run()
