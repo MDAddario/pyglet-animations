@@ -3,6 +3,7 @@ from pyglet.gl import *
 from pyglet.window import key
 from pyglet.window import mouse
 import numpy as np
+from scipy.spatial.transform import Rotation as R
 import os
 
 try:
@@ -321,10 +322,14 @@ class CharacterModel:
 	def __delete__(self):
 		vertex_list.delete()
 
-	# Scale both the real, local vertices, and the transformation center
+	# Scale both the real, local vertices
 	def __scale_vertices(self, scaling):
-		self.center *= scaling
 		self.vertices *= scaling
+		self.vertex_list.vertices = np.copy(np.ravel(self.vertices))
+	
+	# Rotate both the real, local vertices
+	def __rotate_vertices(self, matrix):
+		self.vertices = self.vertices @ matrix.T	# (matrix @ vertices.T).T
 		self.vertex_list.vertices = np.copy(np.ravel(self.vertices))
 
 	# Translate both the real, local vertices, and the transformation center
@@ -338,7 +343,7 @@ class CharacterModel:
 		if not np.allclose(self.velocity, 0):
 			self.__translate_vertices(dt * self.velocity)
 
-	# Rescale total object size
+	# Rescale total object size about center
 	def rescale(self, new_size):
 
 		# Determine maximal distance of vertices from center
@@ -352,6 +357,24 @@ class CharacterModel:
 		# Slide to origin, rescale, slide back
 		self.__translate_vertices(-old_center)
 		self.__scale_vertices(scaling)
+		self.__translate_vertices(old_center)
+	
+	# Rotate object about center
+	def rotate_degrees(self, axis, angle):
+		
+		# Check axis makes sense
+		if axis not in "xyz":
+			raise ValueError("Rotation axis must be 'x', 'y', or 'z'.")
+		
+		# Build rotation object
+		r = R.from_euler(axis, angle, degrees=True)
+		
+		# Keep track of old center position
+		old_center = np.copy(self.center)
+		
+		# Slide to origin, rescale, slide back
+		self.__translate_vertices(-old_center)
+		self.__rotate_vertices(r.as_matrix())
 		self.__translate_vertices(old_center)
 
 	# Set velocity values
@@ -527,12 +550,15 @@ def on_mouse_scroll(x, y, scroll_x, scroll_y):
 	dz = min(dz, 0)
 
 
-# Include 3D models
+# Load 3D fox model
 os.chdir('fox/')
 fox = pyglet.model.load("low-poly-fox-by-pixelmannen.obj", batch=batch)
 fox_model = CharacterModel(fox.vertex_lists[0])
+
+# Configure initial conditions for fox model
 fox_model.rescale(2)
 fox_model.set_position([0, 0, 0])
+fox_model.rotate_degrees('y', 90)
 
 # Add keystate handler (breaks if you put this sooner in the code)
 keys = key.KeyStateHandler()
