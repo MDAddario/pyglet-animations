@@ -37,7 +37,7 @@ def setup():
 	glEnable(GL_CULL_FACE)
 
 	# Wireframe view
-	#glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
 
 	# Simple light setup
 	glEnable(GL_LIGHTING)
@@ -307,7 +307,7 @@ class CustomModel:
 
 		# Define classical mechanics
 		self.velocity = np.zeros(3)
-		self.max_speed = 2.0
+		self.max_speed = 10.0
 
 	# Destructor
 	def __delete__(self):
@@ -374,6 +374,7 @@ torus_model = create_torus(radius=0.6, inner_radius=0.2, slices=50,
 triangle_model = triangle_practice(batch=batch)
 battlefield_lists = battlefield_creator(batch)
 
+
 # Update every frame
 def update(dt):
 	fox_model.update(dt)
@@ -381,7 +382,6 @@ def update(dt):
 
 # Schedule the ever-important update function
 pyglet.clock.schedule(update)
-
 
 # Translation speeds
 cam_rate = 0.7
