@@ -212,8 +212,8 @@ def box_creator(batch, size, center, color, vertex_format, normal_format):
 # Create a set of vertex lists for battlefield stage
 def battlefield_creator(batch, color="blue"):
 
-	# Keep track of all platforms
-	vertex_lists = []
+	# Keep track of all models
+	model_list = []
 
 	# Platform dimensions
 	base_size    = [16.0, 0.8, 3.0]
@@ -223,39 +223,23 @@ def battlefield_creator(batch, color="blue"):
 	right_center = [ 5.0, 3.0, 0.0]
 	top_center   = [ 0.0, 5.0, 0.0]
 
-	# Create all platforms
-	vertex_lists.append(box_creator(batch, base_size, base_center,  color, "static", "static"))
-	vertex_lists.append(box_creator(batch, plat_size, left_center,  color, "static", "static"))
-	vertex_lists.append(box_creator(batch, plat_size, right_center, color, "static", "static"))
-	vertex_lists.append(box_creator(batch, plat_size, top_center,   color, "static", "static"))
-
-	# Dead dictionary
-	dead = {key.W: False, key.A: False, key.S: False, key.D: False}
-
-	# Compute CharacterModel object for each box
-	model_list = []
-	for vertex_list in vertex_lists:
-		model_list.append(CharacterModel(batch, vertex_list, dead, []))
+	# Create all vertex_lists and use them to create models
+	model_list.append(StaticNoClipModel(box_creator(batch, base_size, base_center,  color, "static", "static")))
+	model_list.append(StaticNoClipModel(box_creator(batch, plat_size, left_center,  color, "static", "static")))
+	model_list.append(StaticNoClipModel(box_creator(batch, plat_size, right_center, color, "static", "static")))
+	model_list.append(StaticNoClipModel(box_creator(batch, plat_size, top_center,   color, "static", "static")))
 
 	return model_list
 
 
-# Keep track of character that moves around and interacts with environment
-class CharacterModel:
-
-	# Classical mechanics attributes
-	force     = 250.0
-	friction  =  45.0
-	max_speed =  10.0
+# Static model that does not check for collisions with environment
+class StaticNoClipModel:
 
 	# Constructor
-	def __init__(self, batch, vertex_list, keys, stage_model_list):
+	def __init__(self, vertex_list):
 
 		# Store the instance attributes
-		self.batch            = batch
-		self.vertex_list      = vertex_list
-		self.keys             = keys
-		self.stage_model_list = stage_model_list
+		self.vertex_list = vertex_list
 
 		# Extract a deepcopy of vertices formatted as Nx3 array
 		self.vertices = []
@@ -263,61 +247,58 @@ class CharacterModel:
 		self.vertices = np.reshape(self.vertices, (-1, 3))
 
 		# Compute transformation center and Environment Collision Box dimensions
-		self.center   = self.__compute_center()
-		self.ecb_dims = self.__compute_ecb_dims()
-
-		# Start body at rest
-		self.velocity = np.zeros(3)
+		self.center   = self._compute_center()
+		self.ecb_dims = self._compute_ecb_dims()
 
 	# Destructor
 	def __del__(self):
 		self.vertex_list.delete()
 
 	# Determine model center from the vertices
-	def __compute_center(self):
+	def _compute_center(self):
 		return (np.max(self.vertices, axis=0) + np.min(self.vertices, axis=0)) / 2
 
 	# Determine ecb dimensions from the vertices
-	def __compute_ecb_dims(self):
+	def _compute_ecb_dims(self):
 		return (np.max(self.vertices, axis=0) - np.min(self.vertices, axis=0)) / 2
 
 	# Update the real vertex list from the object's local copy
-	def __update_vertex_list(self):
+	def _update_vertex_list(self):
 		self.vertex_list.vertices = np.copy(np.ravel(self.vertices))
 
 	# Scale both the real, local vertices, and the ecb dimensions
-	def __scale_vertices(self, scaling):
+	def _scale_vertices(self, scaling):
 		self.vertices *= scaling
-		self.__update_vertex_list()
+		self._update_vertex_list()
 		self.ecb_dims *= scaling
 
 	# Rotate both the real, local vertices, and the ecb dimensions
-	def __rotate_vertices(self, rotation):
+	def _rotate_vertices(self, rotation):
 		self.vertices = rotation.apply(self.vertices)
-		self.__update_vertex_list()
-		self.ecb_dims = self.__compute_ecb_dims()
+		self._update_vertex_list()
+		self.ecb_dims = self._compute_ecb_dims()
 
 	# Translate both the real, local vertices, and the transformation center
-	def __translate_vertices(self, translation):
+	def _translate_vertices(self, translation):
 		self.vertices += translation
-		self.__update_vertex_list()
+		self._update_vertex_list()
 		self.center += translation
 
 	# Rescale total object size about center
-	def rescale(self, new_size):
+	def rescale(self, new_scale):
 
 		# Determine maximal distance of vertices from center
 		distances = np.sqrt(np.sum(np.square(self.vertices - self.center), axis=1))
 		max_dist = np.max(distances)
-		scaling = new_size / max_dist
+		scaling = new_scale / max_dist
 
 		# Keep track of old center position
 		old_center = np.copy(self.center)
 
 		# Slide to origin, rescale, slide back
-		self.__translate_vertices(-old_center)
-		self.__scale_vertices(scaling)
-		self.__translate_vertices(old_center)
+		self._translate_vertices(-old_center)
+		self._scale_vertices(scaling)
+		self._translate_vertices(old_center)
 
 	# Rotate object about center
 	def rotate_degrees(self, axis, angle):
@@ -333,13 +314,35 @@ class CharacterModel:
 		old_center = np.copy(self.center)
 
 		# Slide to origin, rescale, slide back
-		self.__translate_vertices(-old_center)
-		self.__rotate_vertices(r)
-		self.__translate_vertices(old_center)
+		self._translate_vertices(-old_center)
+		self._rotate_vertices(r)
+		self._translate_vertices(old_center)
 
 	# Set the position of the model
 	def set_position(self, position):
-		self.__translate_vertices(position - self.center)
+		self._translate_vertices(position - self.center)
+
+
+# Static model that does not check for collisions with environment
+class DynamicClipModel(StaticNoClipModel):
+
+	# Classical mechanics attributes
+	force     = 250.0
+	friction  =  45.0
+	max_speed =  10.0
+
+	# Constructor
+	def __init__(self, vertex_list, keys, stage_model_list):
+
+		# Call the parent constructor
+		super().__init__(vertex_list)
+
+		# Store the instance attributes
+		self.keys             = keys
+		self.stage_model_list = stage_model_list
+
+		# Start body at rest
+		self.velocity = np.zeros(3)
 
 	# Update model position based off keyboard input, existing velocity, and evironment coliisions
 	def update(self, dt):
@@ -365,7 +368,7 @@ class CharacterModel:
 
 		# Move player for non-zero velocity
 		if not np.allclose(self.velocity, 0):
-			self.__translate_vertices(dt * self.velocity)
+			self._translate_vertices(dt * self.velocity)
 
 		# Clip detection
 		for stage_model in self.stage_model_list:
@@ -516,7 +519,7 @@ if __name__ == "__main__":
 	# Load 3D fox model
 	os.chdir('fox/')
 	fox = pyglet.model.load("low-poly-fox-by-pixelmannen.obj", batch=batch)
-	fox_model = CharacterModel(batch, fox.vertex_lists[0], keys, stage_model_list)
+	fox_model = DynamicClipModel(fox.vertex_lists[0], keys, stage_model_list)
 
 	# Configure initial conditions for fox model
 	fox_model.rescale(2)
@@ -525,9 +528,7 @@ if __name__ == "__main__":
 
 	# Keep track of all the active models
 	object_list = []
-	#object_list.append(fox_model)
-
-	del fox_model
+	object_list.append(fox_model)
 
 	# Run the animation!
 	pyglet.app.run()
