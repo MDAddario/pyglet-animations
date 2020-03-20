@@ -257,7 +257,7 @@ class CharacterModel:
 		self.vertices = np.reshape(self.vertices, (-1, 3))
 
 		# Define classical mechanics
-		self.force = 200.0
+		self.force = 250.0
 		self.friction = 45.0
 		self.max_speed = 10.0
 		self.velocity = np.zeros(3)
@@ -266,13 +266,18 @@ class CharacterModel:
 		if center is not None:
 			self.center = center
 		else:
-			self.center = np.mean(self.vertices, axis=0)
+			self.__compute_center()
 		
 		# Determine the environment collision box
 		if ecb_dims is not None:
 			self.ecb_dims = ecb_dims
 		else:
 			self.__compute_ecb_dims()
+	
+	# Determine model center from the vertices
+	def __compute_center(self):
+		self.center = np.max(self.vertices, axis=0) + np.min(self.vertices, axis=0)
+		self.center /= 2
 	
 	# Determine ecb dimensions from the vertices
 	def __compute_ecb_dims(self):
