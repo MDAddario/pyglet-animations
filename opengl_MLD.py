@@ -380,6 +380,13 @@ class DynamicClipModel(StaticNoClipModel):
 	# Update model position based off keyboard input, existing velocity, and evironment coliisions
 	def update(self, dt):
 
+		# Update color depending on status
+		size = self.vertex_list.tex_coords.size
+		if self.is_grounded:
+			self.vertex_list.tex_coords = np.random.random(size) * 1000
+		else:
+			self.vertex_list.tex_coords = np.ones(size)
+
 		# Rotate the body
 		if self.keys[key.Q] and not self.keys[key.E]:
 			self.rotate_degrees('y', dt * self.ang_speed)
@@ -441,26 +448,26 @@ class DynamicClipModel(StaticNoClipModel):
 				xi = np.argmax(separation)
 
 				# Determine direction along which to eject body
-				sign = np.sign(self.center[xi] - stage_model.center[xi])
+				sign = np.sign(self.velocity[xi])
 
 				# Treat platforms differently
-				if stage_model.is_platform:
+				#if stage_model.is_platform:
 
 					# Only drop through platform if down is held
-					if xi == 0 or sign <= 0 or self.keys[key.S]:
-						continue
+					#if xi == 0 or sign <= 0 or self.keys[key.S]:
+					#	continue
 
 				# Eject body
 				displacement = self.ecb_dims[xi] + stage_model.ecb_dims[xi]
 				new_position = np.copy(self.center)
-				new_position[xi] = stage_model.center[xi] + sign * displacement
+				new_position[xi] = stage_model.center[xi] - sign * displacement
 				self.set_position(new_position)
 
 				# Set velocity to zero
 				self.velocity[xi] = 0
 
 				# Reset to grounded
-				if xi == 1 and sign > 0:
+				if xi == 1 and sign < 0:
 					self.grounded = True
 
 
