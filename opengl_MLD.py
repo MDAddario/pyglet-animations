@@ -246,6 +246,11 @@ class StaticNoClipModel:
 		self.vertices.extend(self.vertex_list.vertices)
 		self.vertices = np.reshape(self.vertices, (-1, 3))
 
+		# Extract a deepcopy of normals formatted as Nx3 array
+		self.normals = []
+		self.normals.extend(self.vertex_list.normals)
+		self.normals = np.reshape(self.normals, (-1, 3))
+
 		# Compute transformation center and Environment Collision Box dimensions
 		self.center   = self._compute_center()
 		self.ecb_dims = self._compute_ecb_dims()
@@ -262,26 +267,32 @@ class StaticNoClipModel:
 	def _compute_ecb_dims(self):
 		return (np.max(self.vertices, axis=0) - np.min(self.vertices, axis=0)) / 2
 
-	# Update the real vertex list from the object's local copy
-	def _update_vertex_list(self):
+	# Update the real vertices from the object's local copy
+	def _update_vertices(self):
 		self.vertex_list.vertices = np.copy(np.ravel(self.vertices))
+
+	# Update the real normals from the object's local copy
+	def _update_normals(self):
+		self.vertex_list.normals = np.copy(np.ravel(self.normals))
 
 	# Scale both the real, local vertices, and the ecb dimensions
 	def _scale_vertices(self, scaling):
 		self.vertices *= scaling
-		self._update_vertex_list()
+		self._update_vertices()
 		self.ecb_dims *= scaling
 
-	# Rotate both the real, local vertices, and the ecb dimensions
+	# Rotate both the real, local vertices, the ecb dimensions, and the normals
 	def _rotate_vertices(self, rotation):
 		self.vertices = rotation.apply(self.vertices)
-		self._update_vertex_list()
+		self.normals  = rotation.apply(self.normals)
+		self._update_vertices()
+		self._update_normals()
 		self.ecb_dims = self._compute_ecb_dims()
 
 	# Translate both the real, local vertices, and the transformation center
 	def _translate_vertices(self, translation):
 		self.vertices += translation
-		self._update_vertex_list()
+		self._update_vertices()
 		self.center += translation
 
 	# Rescale total object size about center
