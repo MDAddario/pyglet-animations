@@ -240,7 +240,7 @@ def battlefield_creator(batch, color="blue"):
 	return model_list
 
 
-# Class to keep track of model and associated attributes
+# Keep track of character that moves around and interacts with environment
 class CharacterModel:
 
 	# Classical mechanics attributes
@@ -488,29 +488,30 @@ def update(dt):
 # The main attraction
 if __name__ == "__main__":
 
-	# Setup window and batch
+	# Setup window and the only batch
 	setup()
 	batch = pyglet.graphics.Batch()
 
-	# Initialize global variables
-	rx = ry = rz = 0
-	dx = 0
-	dy = -2
-	dz = -15
-
-	# Generate sample polygons
-	tri_vertex_list = triangle_practice(batch)
-	stage_model_list = battlefield_creator(batch)
+	# Add keystate handler
+	keys = key.KeyStateHandler()
+	window.push_handlers(keys)
 
 	# Schedule the ever-important update function
 	pyglet.clock.schedule(update)
 
-	# Translation speeds
+	# Initialize global variables for camera rotation and translation
+	rx = ry = rz = dx = 0
+	dy = -2
+	dz = -15
+
+	# Camera translation speed
 	cam_rate = 0.7
 
-	# Add keystate handler (breaks if you put this sooner in the code)
-	keys = key.KeyStateHandler()
-	window.push_handlers(keys)
+	# Generate sample polygons
+	tri_vertex_list = triangle_practice(batch)
+
+	# Create stage models
+	stage_model_list = battlefield_creator(batch)
 
 	# Load 3D fox model
 	os.chdir('fox/')
