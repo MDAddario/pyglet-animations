@@ -94,12 +94,12 @@ def triangle_practice(batch):
 	normals = []
 
 	# Populate the vertices array
-	vertices.extend([-size, +size, 0])
-	vertices.extend([-size, -size, 0])
+	vertices.extend([-size,       0, 0])
+	vertices.extend([-size, -size/5, 0])
 	vertices.extend([-0, -0, 0])
 
-	vertices.extend([+size, -size, 0])
-	vertices.extend([+size, +size, 0])
+	vertices.extend([+size, -size/5, 0])
+	vertices.extend([+size,       0, 0])
 	vertices.extend([+0, +0, 0])
 
 	# Populate the normals array
@@ -510,11 +510,20 @@ if __name__ == "__main__":
 	# Camera translation speed
 	cam_rate = 0.7
 
-	# Generate sample polygons
-	tri_vertex_list = triangle_practice(batch)
-
 	# Create stage models
 	stage_model_list = battlefield_creator(batch)
+	
+	# Decorate stage with triangle models
+	tri_front_vertex_list = triangle_practice(batch)
+	tri_front_model = StaticNoClipModel(tri_front_vertex_list)
+	tri_front_model.rescale(8)
+	tri_front_model.set_position([0, -1, 1])
+	
+	tri_back_vertex_list = triangle_practice(batch)
+	tri_back_model = StaticNoClipModel(tri_back_vertex_list)
+	tri_back_model.rescale(8)
+	tri_back_model.rotate_degrees('y', 180)
+	tri_back_model.set_position([0, -1, -1])
 
 	# Load 3D fox model
 	os.chdir('fox/')
