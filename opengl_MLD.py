@@ -270,8 +270,8 @@ class CharacterModel:
 		self.velocity = np.zeros(3)
 
 	# Destructor
-	def __delete__(self):
-		vertex_list.delete()
+	def __del__(self):
+		self.vertex_list.delete()
 
 	# Determine model center from the vertices
 	def __compute_center(self):
@@ -525,7 +525,9 @@ if __name__ == "__main__":
 
 	# Keep track of all the active models
 	object_list = []
-	object_list.append(fox_model)
+	#object_list.append(fox_model)
+
+	del fox_model
 
 	# Run the animation!
 	pyglet.app.run()
