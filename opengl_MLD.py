@@ -349,12 +349,19 @@ class StaticNoClipModel:
 # Static model that does not check for collisions with environment
 class DynamicClipModel(StaticNoClipModel):
 
-	# Classical mechanics attributes
-	force     = 250.0
-	friction  =  45.0
-	max_speed =  10.0
+	# Grounded attributes
+	run_force    = 400.0
+	run_friction =  30.0
+	jump_force   = 400.0
 
+	# Airbourne attributes
+	fall_force    = 100.0
+	drift_force   = 150.0
+	gravity_force = 100.0
+
+	# General attributes
 	ang_speed = 500.0
+	max_speed =  10.0
 
 	# Constructor
 	def __init__(self, vertex_list, keys, stage_model_list):
@@ -366,40 +373,60 @@ class DynamicClipModel(StaticNoClipModel):
 		self.keys             = keys
 		self.stage_model_list = stage_model_list
 
-		# Start body at rest
+		# Start body at rest, in the air
 		self.velocity = np.zeros(3)
+		self.is_grounded = False
 
 	# Update model position based off keyboard input, existing velocity, and evironment coliisions
 	def update(self, dt):
-
-		# Drive the system by user input
-		if self.keys[key.W]:
-			self.velocity[1] += self.force * dt
-		if self.keys[key.S]:
-			self.velocity[1] -= self.force * dt
-		if self.keys[key.D]:
-			self.velocity[0] += self.force * dt
-		if self.keys[key.A]:
-			self.velocity[0] -= self.force * dt
-
-		# Account for friction
-		self.velocity -= np.sign(self.velocity) * self.friction * dt
-
-		# Allow friction to bring bodies to rest
-		self.velocity = np.where(np.abs(self.velocity) - self.friction * dt < 0, 0, self.velocity)
-
-		# Enforce maximum velocity
-		np.clip(self.velocity, -self.max_speed, self.max_speed, out=self.velocity)
-
-		# Move player for non-zero velocity
-		if not np.allclose(self.velocity, 0):
-			self._translate_vertices(dt * self.velocity)
 
 		# Rotate the body
 		if self.keys[key.Q] and not self.keys[key.E]:
 			self.rotate_degrees('y', dt * self.ang_speed)
 		elif self.keys[key.E] and not self.keys[key.Q]:
 			self.rotate_degrees('y', -dt * self.ang_speed)
+
+		# Grounded motion
+		if self.is_grounded:
+
+			# Running
+			if self.keys[key.D] and not self.keys[key.A]:
+				self.velocity[0] += self.run_force * dt
+			elif self.keys[key.A] and not self.keys[key.D]:
+				self.velocity[0] -= self.run_force * dt
+
+			# Jumping
+			if self.keys[key.SPACE]:
+				self.velocity[1] += self.jump_force
+				self.is_grounded = False
+
+			# Friction
+			else:
+				self.velocity[0] -= np.sign(self.velocity[0]) * self.run_friction * dt
+				self.velocity[0] = np.where(np.abs(self.velocity[0]) - self.friction * dt < 0, 0, self.velocity[0])
+
+				# Max speed
+				self.velocity[0] = np.clip(self.velocity[0], -self.max_speed, self.max_speed)
+
+		# Airborne motion
+		else:
+
+			# Horizontal drifting
+			if self.keys[key.D] and not self.keys[key.A]:
+				self.velocity[0] += self.drift_force * dt
+			elif self.keys[key.A] and not self.keys[key.D]:
+				self.velocity[0] -= self.drift_force * dt
+
+			# Fast falling
+			if self.velocity[1] < 0 and self.keys[key.S]:
+				self.velocity[1] -= self.fall_force * dt
+
+			# Gravity
+			self.velocity[1] -= self.gravity_force * dt
+
+		# Move player for non-zero velocity
+		if not np.allclose(self.velocity, 0):
+			self._translate_vertices(dt * self.velocity)
 
 		# Clip detection
 		for stage_model in self.stage_model_list:
@@ -431,6 +458,10 @@ class DynamicClipModel(StaticNoClipModel):
 
 				# Set velocity to zero
 				self.velocity[xi] = 0
+
+				# Reset to grounded
+				if xi == 1 and sign > 0:
+					self.grounded = True
 
 
 # Take care of camera movement
