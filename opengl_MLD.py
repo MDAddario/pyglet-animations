@@ -227,10 +227,18 @@ def battlefield_creator(batch, color="blue"):
 	top_center   = [ 0.0, 5.0, 0.0]
 
 	# Create all vertex_lists and use them to create models
-	model_list.append(StaticNoClipModel(box_creator(batch, base_size, base_center,  color, "static", "static")))
-	model_list.append(StaticNoClipModel(box_creator(batch, plat_size, left_center,  color, "static", "static")))
-	model_list.append(StaticNoClipModel(box_creator(batch, plat_size, right_center, color, "static", "static")))
-	model_list.append(StaticNoClipModel(box_creator(batch, plat_size, top_center,   color, "static", "static")))
+	model_list.append(StaticNoClipModel(box_creator(batch, base_size, base_center,
+													color, "static", "static"),
+										is_platform=False))
+	model_list.append(StaticNoClipModel(box_creator(batch, plat_size, left_center,
+													color, "static", "static"),
+										is_platform=True))
+	model_list.append(StaticNoClipModel(box_creator(batch, plat_size, right_center,
+													color, "static", "static"),
+										is_platform=True))
+	model_list.append(StaticNoClipModel(box_creator(batch, plat_size, top_center,
+													color, "static", "static"),
+										is_platform=True))
 
 	return model_list
 
@@ -239,10 +247,11 @@ def battlefield_creator(batch, color="blue"):
 class StaticNoClipModel:
 
 	# Constructor
-	def __init__(self, vertex_list):
+	def __init__(self, vertex_list, is_platform=False):
 
 		# Store the instance attributes
 		self.vertex_list = vertex_list
+		self.is_platform = is_platform
 
 		# Extract a deepcopy of vertices formatted as Nx3 array
 		self.vertices = []
@@ -404,10 +413,19 @@ class DynamicClipModel(StaticNoClipModel):
 				# Decide along which axis to eject the body
 				xi = np.argmax(separation)
 
-				# Eject body
-				new_position = np.copy(self.center)
+				# Determine direction along which to eject body
 				sign = np.sign(self.center[xi] - stage_model.center[xi])
+
+				# Treat platforms differently
+				if stage_model.is_platform:
+
+					# Only drop through platform if down is held
+					if xi == 0 or sign <= 0 or self.keys[key.S]:
+						continue
+
+				# Eject body
 				displacement = self.ecb_dims[xi] + stage_model.ecb_dims[xi]
+				new_position = np.copy(self.center)
 				new_position[xi] = stage_model.center[xi] + sign * displacement
 				self.set_position(new_position)
 
