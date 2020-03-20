@@ -350,18 +350,18 @@ class StaticNoClipModel:
 class DynamicClipModel(StaticNoClipModel):
 
 	# Grounded attributes
-	run_force    = 400.0
-	run_friction =  30.0
-	jump_force   = 400.0
+	run_force    = 100.0
+	run_friction =  50.0
+	jump_force   =  25.0
 
 	# Airbourne attributes
-	fall_force    = 100.0
-	drift_force   = 150.0
+	fall_force    =  50.0
+	drift_force   =  30.0
 	gravity_force = 100.0
 
 	# General attributes
 	ang_speed = 500.0
-	max_speed =  10.0
+	max_speed =  20.0
 
 	# Constructor
 	def __init__(self, vertex_list, keys, stage_model_list):
@@ -410,7 +410,7 @@ class DynamicClipModel(StaticNoClipModel):
 			# Friction
 			else:
 				self.velocity[0] -= np.sign(self.velocity[0]) * self.run_friction * dt
-				self.velocity[0] = np.where(np.abs(self.velocity[0]) - self.friction * dt < 0, 0, self.velocity[0])
+				self.velocity[0] = np.where(np.abs(self.velocity[0]) - self.run_friction * dt < 0, 0, self.velocity[0])
 
 				# Max speed
 				self.velocity[0] = np.clip(self.velocity[0], -self.max_speed, self.max_speed)
@@ -450,12 +450,16 @@ class DynamicClipModel(StaticNoClipModel):
 				# Determine direction along which to eject body
 				sign = np.sign(self.velocity[xi])
 
+				# Reset to grounded if landing on floor
+				if xi == 1 and sign < 0:
+					self.is_grounded = True
+
 				# Treat platforms differently
-				#if stage_model.is_platform:
+				if stage_model.is_platform:
 
 					# Only drop through platform if down is held
-					#if xi == 0 or sign <= 0 or self.keys[key.S]:
-					#	continue
+					if xi == 0 or sign > 0 or self.keys[key.S]:
+						continue
 
 				# Eject body
 				displacement = self.ecb_dims[xi] + stage_model.ecb_dims[xi]
@@ -465,10 +469,6 @@ class DynamicClipModel(StaticNoClipModel):
 
 				# Set velocity to zero
 				self.velocity[xi] = 0
-
-				# Reset to grounded
-				if xi == 1 and sign < 0:
-					self.grounded = True
 
 
 # Take care of camera movement
