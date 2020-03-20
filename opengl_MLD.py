@@ -40,6 +40,9 @@ def setup():
 	glEnable(GL_DEPTH_TEST)
 	glEnable(GL_CULL_FACE)
 
+	# Enable wireframe view
+	#glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
+
 	# Simple light setup
 	glEnable(GL_LIGHTING)
 	glEnable(GL_LIGHT0)
@@ -342,6 +345,8 @@ class DynamicClipModel(StaticNoClipModel):
 	friction  =  45.0
 	max_speed =  10.0
 
+	ang_speed = 500.0
+
 	# Constructor
 	def __init__(self, vertex_list, keys, stage_model_list):
 
@@ -381,6 +386,12 @@ class DynamicClipModel(StaticNoClipModel):
 		if not np.allclose(self.velocity, 0):
 			self._translate_vertices(dt * self.velocity)
 
+		# Rotate the body
+		if self.keys[key.Q] and not self.keys[key.E]:
+			self.rotate_degrees('y', dt * self.ang_speed)
+		elif self.keys[key.E] and not self.keys[key.Q]:
+			self.rotate_degrees('y', -dt * self.ang_speed)
+
 		# Clip detection
 		for stage_model in self.stage_model_list:
 
@@ -418,12 +429,8 @@ def translate_camera_y(dt, rate):
 @window.event
 def on_key_press(symbol, modifiers):
 
-	# Enable wireframe view
-	if symbol == key.SPACE:
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
-
 	# Translate the camera
-	elif symbol == key.UP:
+	if symbol == key.UP:
 		if keys[key.DOWN]:
 			pyglet.clock.unschedule(translate_camera_y)
 		pyglet.clock.schedule(translate_camera_y, rate=cam_rate)
