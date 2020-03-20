@@ -363,6 +363,10 @@ class CharacterModel:
 		# Enforce maximum velocity
 		np.clip(self.velocity, -self.max_speed, self.max_speed, out=self.velocity)
 
+		# Move player for non-zero velocity
+		if not np.allclose(self.velocity, 0):
+			self.__translate_vertices(dt * self.velocity)
+
 		# Clip detection
 		for stage_model in self.stage_model_list:
 
@@ -384,10 +388,6 @@ class CharacterModel:
 
 				# Set velocity to zero
 				self.velocity[xi] = 0
-
-		# Move player for non-zero velocity
-		if not np.allclose(self.velocity, 0):
-			self.__translate_vertices(dt * self.velocity)
 
 
 # Take care of camera movement
