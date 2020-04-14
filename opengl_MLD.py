@@ -41,7 +41,7 @@ def setup():
 	glEnable(GL_CULL_FACE)
 
 	# Enable wireframe view
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
+	#glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
 
 	# Simple light setup
 	glEnable(GL_LIGHTING)
@@ -87,18 +87,99 @@ def create_vertex_list(batch, vertices, normals, indices, color, render_mode=GL_
 							(normal_format, normals))
 
 
-# In spherical coordinates
-def make_vector(theta, phi, radius=1, center=[0, 0, 0]):
+def make_sample_position_data(num):
 
-	x = (np.sin(theta) * np.cos(phi)) * radius + center[0]
-	y = (np.sin(theta) * np.sin(phi)) * radius + center[1]
-	z = (np.cos(theta)) * radius + center[2]
+	t = np.linspace(0, 2 * np.pi, num=num)
+	x = 5 * np.cos(t)
+	y = 5 * np.sin(t)
+	z = np.zeros_like(x)
 
-	return [x, y, z]
+	position_data = []
+	for x_, y_, z_ in zip(x, y, z):
+		position_data.append(np.asarray([x_, y_, z_]))
+
+	return position_data
 
 
-# make a sphere
+# Create the tube path
+def create_tube_path(position_data, radius, num, color):
+
+	# Create the circle orthog to a normal vector
+	def circle_from_normal(normal, center, radius, num):
+
+		norm = np.linalg.norm
+
+		# Take other vector that is not parallel
+		new_vector = np.copy(normal) + np.array([0, 0, 1])
+
+		# Cross these guys
+		ortho_not_norm = np.cross(normal, new_vector)
+		ortho = ortho_not_norm / norm(ortho_not_norm)
+
+		# Create scaled normal (the magnitude corresponds to the rotation amount)
+		scaled_normal = normal / norm(normal) * 2 * np.pi / num
+
+		# Create our rotation object
+		r = R.from_rotvec(scaled_normal)
+
+		vertices = []
+		normals = []
+
+		for _ in range(num):
+
+			# Rotate the vector
+			ortho = r.apply(ortho)
+
+			vertices.extend(ortho * radius + center)
+			normals.extend(ortho)
+
+		return vertices, normals
+
+	# Keep track of all the vertices and the normals
+	vertices = []
+	normals = []
+	indices = []
+	cur_num = 0
+
+	for i in range(len(position_data) - 1):
+
+		# Compute the verts and norms for the next set of points
+		normal = position_data[i+1] - position_data[i]
+		new_verts, new_norms = circle_from_normal(normal, position_data[i], radius, num)
+
+		# Append to the master list
+		vertices.extend(new_verts)
+		normals.extend(new_norms)
+
+		if i == 0:
+			cur_num += num
+			continue
+
+		# Connect to the last circle
+		for j in range(num):
+			if j == num-1:
+				indices.extend([cur_num, cur_num + j, cur_num + j - num, cur_num - num])
+			else:
+				indices.extend([cur_num + j + 1, cur_num + j, cur_num + j - num, cur_num + j + 1 - num])
+
+		# Keep track of how many vertices we have gone through 
+		cur_num += num
+
+	# Create the object
+	return create_vertex_list(batch, vertices, normals, indices, color, GL_QUADS, "static", "static")
+
+
+# Make a sphere
 def create_sphere(batch, radius, center, num=3):
+
+	# In spherical coordinates
+	def make_vector(theta, phi, radius=1, center=[0, 0, 0]):
+
+		x = (np.sin(theta) * np.cos(phi)) * radius + center[0]
+		y = (np.sin(theta) * np.sin(phi)) * radius + center[1]
+		z = (np.cos(theta)) * radius + center[2]
+
+		return [x, y, z]
 
 	# Create the vertex and normal arrays
 	vertices = []
@@ -156,7 +237,6 @@ def create_sphere(batch, radius, center, num=3):
 				else:
 					indices.extend([M + 1 + p_i, M + p_i, M + num + p_i])
 					indices.extend([M + 1 + p_i, M + num + p_i, M + num + p_i + 1])
-
 
 	return create_vertex_list(batch, vertices, normals, indices, "red",
 								GL_TRIANGLES, "static", "static")
@@ -661,10 +741,12 @@ if __name__ == "__main__":
 	# Camera translation speed
 	cam_rate = 0.7
 
-	sphere = create_sphere(batch, 10, np.array([0, 0, 0]), num=20)
+	#sphere = create_sphere(batch, 10, np.array([0, 0, 0]), num=20)
 
 	# Keep track of all the active models
 	object_list = []
+	
+	create_tube_path()
 
 	# Run the animation!
 	pyglet.app.run()
