@@ -90,9 +90,9 @@ def create_vertex_list(batch, vertices, normals, indices, color, render_mode=GL_
 # In spherical coordinates
 def make_vector(theta, phi, radius=1, center=[0, 0, 0]):
 
-	x = np.sin(theta) * np.cos(phi) + center[0]
-	y = np.sin(theta) * np.sin(phi) + center[1]
-	z = np.cos(theta) + center[2]
+	x = (np.sin(theta) * np.cos(phi)) * radius + center[0]
+	y = (np.sin(theta) * np.sin(phi)) * radius + center[1]
+	z = (np.cos(theta)) * radius + center[2]
 
 	return [x, y, z]
 
@@ -112,19 +112,41 @@ def create_sphere(batch, radius, center, num=3):
 			vertices.extend(make_vector(theta, 0, radius, center))
 			normals.extend(make_vector(theta, 0))
 
-			box_creator(batch, [0.1,0.1,0.1], vertices[-3:], "red", "static", "static")
+		else: 
+			for phi in np.linspace(0, 2*np.pi, num=num, endpoint=False):
+				vertices.extend(make_vector(theta, phi, radius, center))
+				normals.extend(make_vector(theta, phi))
 
-		for phi in np.linspace(0, 2*np.pi, num=num, endpoint=False):
-			vertices.extend(make_vector(theta, phi, radius, center))
-			normals.extend(make_vector(theta, phi))
-
-			box_creator(batch, [0.1,0.1,0.1], vertices[-3:], "red", "static", "static")
+	# Count how many vertices we have
+	N = len(vertices) // 3
 
 	# Create a list of triangle indices
 	indices = []
 
+	# Span all angles
+	for t_i in np.arange(num-1):
 
-	return None
+		# North and south poles
+		if t_i == 0:
+			for p_i in np.arange(num):
+				if p_i == num - 1:
+					indices.extend([0, p_i + 1, 1])
+				else:
+					indices.extend([0, p_i + 1, p_i + 2])
+
+
+		elif t_i == num-2:
+			for p_i in np.arange(num):
+				if p_i == num - 1:
+					indices.extend([N-1, N-1-p_i-1, N-2])
+				else:
+					indices.extend([N-1, N-1-p_i-1, N-1-p_i-2])
+
+		else:
+			for p_i in np.arange(num):
+				pass
+
+
 	return create_vertex_list(batch, vertices, normals, indices, "red",
 								GL_TRIANGLES, "static", "static")
 
@@ -628,7 +650,7 @@ if __name__ == "__main__":
 	# Camera translation speed
 	cam_rate = 0.7
 
-	sphere = create_sphere(batch, 1.0, np.array([0, 0, 0]), num=20)
+	sphere = create_sphere(batch, 10, np.array([0, 0, 0]), num=20)
 
 	# Keep track of all the active models
 	object_list = []
