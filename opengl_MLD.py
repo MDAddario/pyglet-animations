@@ -41,7 +41,7 @@ def setup():
 	glEnable(GL_CULL_FACE)
 
 	# Enable wireframe view
-	#glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
 
 	# Simple light setup
 	glEnable(GL_LIGHTING)
@@ -143,8 +143,19 @@ def create_sphere(batch, radius, center, num=3):
 					indices.extend([N-1, N-1-p_i-1, N-1-p_i-2])
 
 		else:
+
+			# Determine what vertex we are at
+			M = 1 + num * (t_i - 1)
+
 			for p_i in np.arange(num):
-				pass
+
+				# Make nice triangles
+				if p_i == num - 1:
+					indices.extend([M + 1 + p_i - num, M + p_i, M + num + p_i])
+					indices.extend([M + 1 + p_i - num, M + num + p_i, M + num + p_i + 1 - num])
+				else:
+					indices.extend([M + 1 + p_i, M + p_i, M + num + p_i])
+					indices.extend([M + 1 + p_i, M + num + p_i, M + num + p_i + 1])
 
 
 	return create_vertex_list(batch, vertices, normals, indices, "red",
