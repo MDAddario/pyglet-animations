@@ -87,6 +87,48 @@ def create_vertex_list(batch, vertices, normals, indices, color, render_mode=GL_
 							(normal_format, normals))
 
 
+# In spherical coordinates
+def make_vector(theta, phi, radius=1, center=[0, 0, 0]):
+
+	x = np.sin(theta) * np.cos(phi) + center[0]
+	y = np.sin(theta) * np.sin(phi) + center[1]
+	z = np.cos(theta) + center[2]
+
+	return [x, y, z]
+
+
+# make a sphere
+def create_sphere(batch, radius, center, num=3):
+
+	# Create the vertex and normal arrays
+	vertices = []
+	normals = []
+
+	# Span all angles
+	for theta in np.linspace(0, np.pi, num=num, endpoint=True):
+
+		# North and south poles
+		if theta == 0 or theta == np.pi:
+			vertices.extend(make_vector(theta, 0, radius, center))
+			normals.extend(make_vector(theta, 0))
+
+			box_creator(batch, [0.1,0.1,0.1], vertices[-3:], "red", "static", "static")
+
+		for phi in np.linspace(0, 2*np.pi, num=num, endpoint=False):
+			vertices.extend(make_vector(theta, phi, radius, center))
+			normals.extend(make_vector(theta, phi))
+
+			box_creator(batch, [0.1,0.1,0.1], vertices[-3:], "red", "static", "static")
+
+	# Create a list of triangle indices
+	indices = []
+
+
+	return None
+	return create_vertex_list(batch, vertices, normals, indices, "red",
+								GL_TRIANGLES, "static", "static")
+
+
 # Create two floating triangles
 def triangle_practice(batch):
 
@@ -380,12 +422,14 @@ class DynamicClipModel(StaticNoClipModel):
 	# Update model position based off keyboard input, existing velocity, and evironment coliisions
 	def update(self, dt):
 
+		'''
 		# Update color depending on status
 		size = self.vertex_list.tex_coords.size
 		if self.is_grounded:
 			self.vertex_list.tex_coords = np.random.random(size) * 1000
 		else:
 			self.vertex_list.tex_coords = np.ones(size)
+		'''
 
 		# Rotate the body
 		if self.keys[key.Q] and not self.keys[key.E]:
@@ -584,34 +628,10 @@ if __name__ == "__main__":
 	# Camera translation speed
 	cam_rate = 0.7
 
-	# Create stage models
-	stage_model_list = battlefield_creator(batch)
-	
-	# Decorate stage with triangle models
-	tri_front_vertex_list = triangle_practice(batch)
-	tri_front_model = StaticNoClipModel(tri_front_vertex_list)
-	tri_front_model.rescale(8)
-	tri_front_model.set_position([0, -1, 1])
-	
-	tri_back_vertex_list = triangle_practice(batch)
-	tri_back_model = StaticNoClipModel(tri_back_vertex_list)
-	tri_back_model.rescale(8)
-	tri_back_model.rotate_degrees('y', 180)
-	tri_back_model.set_position([0, -1, -1])
-
-	# Load 3D fox model
-	os.chdir('fox/')
-	fox = pyglet.model.load("low-poly-fox-by-pixelmannen.obj", batch=batch)
-	fox_model = DynamicClipModel(fox.vertex_lists[0], keys, stage_model_list)
-
-	# Configure initial conditions for fox model
-	fox_model.rescale(2)
-	fox_model.set_position([-5, 1.2, 0])
-	fox_model.rotate_degrees('y', 90)
+	sphere = create_sphere(batch, 1.0, np.array([0, 0, 0]), num=20)
 
 	# Keep track of all the active models
 	object_list = []
-	object_list.append(fox_model)
 
 	# Run the animation!
 	pyglet.app.run()
